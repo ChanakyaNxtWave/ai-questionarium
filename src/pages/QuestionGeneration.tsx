@@ -12,17 +12,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
+import { TopicsDisplay } from "@/components/TopicsDisplay";
+import { QuestionsDisplay } from "@/components/QuestionsDisplay";
+import { generateTopics, generateQuestions } from "@/services/questionGeneration";
 
 const formSchema = z.object({
   unitTitle: z.string().min(1, "Unit title is required"),
@@ -66,36 +62,31 @@ export default function QuestionGeneration() {
       
       // First prompt: Extract topics, subtopics, and learning outcomes
       const topicsResponse = await generateTopics(values.content);
-      setTopics(topicsResponse);
+      if (!topicsResponse.success) {
+        throw new Error(topicsResponse.error);
+      }
+      setTopics(topicsResponse.data || "");
 
       // Second prompt: Generate questions
-      const questionsResponse = await generateQuestions(values.content, topicsResponse);
-      setQuestions(questionsResponse);
+      const questionsResponse = await generateQuestions(values.content, topicsResponse.data || "");
+      if (!questionsResponse.success) {
+        throw new Error(questionsResponse.error);
+      }
+      setQuestions(questionsResponse.data || "");
 
       toast({
-        title: "Questions Generated",
-        description: "Your questions have been generated successfully.",
+        title: "Success",
+        description: "Topics and questions have been generated successfully.",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate questions. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate content",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Placeholder functions for API calls
-  const generateTopics = async (content: string): Promise<string> => {
-    // TODO: Implement API call with Prompt-1
-    return "Sample topics response";
-  };
-
-  const generateQuestions = async (content: string, topics: string): Promise<string> => {
-    // TODO: Implement API call with Prompt-2
-    return "Sample questions response";
   };
 
   return (
@@ -195,23 +186,8 @@ export default function QuestionGeneration() {
         </form>
       </Form>
 
-      {topics && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Generated Topics</h2>
-          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-            {topics}
-          </pre>
-        </div>
-      )}
-
-      {questions && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Generated Questions</h2>
-          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-            {questions}
-          </pre>
-        </div>
-      )}
+      {topics && <TopicsDisplay topics={topics} />}
+      {questions && <QuestionsDisplay questions={questions} />}
     </div>
   );
 }
