@@ -28,24 +28,15 @@ const formSchema = z.object({
   unitTitle: z.string().min(1, "Unit title is required"),
   contentType: z.enum(["text", "file"]),
   content: z.string().min(1, "Content is required"),
-  questionTypes: z.array(z.string()).min(1, "Select at least one question type"),
 });
-
-const questionTypes = [
-  "Multiple Choice",
-  "Fill in the Blanks",
-  "True/False",
-  "Drag and Drop",
-  "Code Analysis",
-  "Output Prediction",
-  "Short Answer",
-];
 
 export default function QuestionGeneration() {
   const { language } = useParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [topics, setTopics] = React.useState<string>("");
+  const [questions, setQuestions] = React.useState<string>("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,7 +44,6 @@ export default function QuestionGeneration() {
       unitTitle: "",
       contentType: "text",
       content: "",
-      questionTypes: [],
     },
   });
 
@@ -73,8 +63,15 @@ export default function QuestionGeneration() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
-      console.log("Form values:", values);
-      // TODO: Implement API call to generate questions
+      
+      // First prompt: Extract topics, subtopics, and learning outcomes
+      const topicsResponse = await generateTopics(values.content);
+      setTopics(topicsResponse);
+
+      // Second prompt: Generate questions
+      const questionsResponse = await generateQuestions(values.content, topicsResponse);
+      setQuestions(questionsResponse);
+
       toast({
         title: "Questions Generated",
         description: "Your questions have been generated successfully.",
@@ -88,6 +85,17 @@ export default function QuestionGeneration() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Placeholder functions for API calls
+  const generateTopics = async (content: string): Promise<string> => {
+    // TODO: Implement API call with Prompt-1
+    return "Sample topics response";
+  };
+
+  const generateQuestions = async (content: string, topics: string): Promise<string> => {
+    // TODO: Implement API call with Prompt-2
+    return "Sample questions response";
   };
 
   return (
@@ -174,37 +182,6 @@ export default function QuestionGeneration() {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="questionTypes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Question Types</FormLabel>
-                <div className="flex flex-wrap gap-2">
-                  {questionTypes.map((type) => (
-                    <Button
-                      key={type}
-                      type="button"
-                      variant={
-                        field.value.includes(type) ? "default" : "outline"
-                      }
-                      onClick={() => {
-                        const newValue = field.value.includes(type)
-                          ? field.value.filter((t) => t !== type)
-                          : [...field.value, type];
-                        field.onChange(newValue);
-                      }}
-                      className="h-auto py-2"
-                    >
-                      {type}
-                    </Button>
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? (
               <>
@@ -217,6 +194,24 @@ export default function QuestionGeneration() {
           </Button>
         </form>
       </Form>
+
+      {topics && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">Generated Topics</h2>
+          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
+            {topics}
+          </pre>
+        </div>
+      )}
+
+      {questions && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">Generated Questions</h2>
+          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
+            {questions}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
