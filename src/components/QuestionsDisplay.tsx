@@ -12,6 +12,10 @@ interface Question {
   concept: string;
   prerequisites: string[];
   questionText: string;
+  contentType: string;
+  questionType: string;
+  code: string | null;
+  codeLanguage: string;
   options: string[];
   correctAnswer: number;
   explanation: string;
@@ -25,11 +29,23 @@ interface QuestionsDisplayProps {
 export const QuestionsDisplay = ({ questions }: QuestionsDisplayProps) => {
   const parsedQuestions = React.useMemo(() => {
     try {
-      return JSON.parse(questions) as Question[];
-    } catch {
+      const parsed = JSON.parse(questions);
+      // Ensure we're working with an array of questions
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch (error) {
+      console.error("Error parsing questions:", error);
       return [];
     }
   }, [questions]);
+
+  const renderCode = (code: string | null, language: string) => {
+    if (!code) return null;
+    return (
+      <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto my-2">
+        <code className={`language-${language.toLowerCase()}`}>{code}</code>
+      </pre>
+    );
+  };
 
   return (
     <Card className="mt-8 p-6">
@@ -44,6 +60,8 @@ export const QuestionsDisplay = ({ questions }: QuestionsDisplayProps) => {
               <div>
                 <h4 className="font-semibold mb-2">Question:</h4>
                 <p>{question.questionText}</p>
+                {question.questionType === "CODE_ANALYSIS_MULTIPLE_CHOICE" && 
+                  renderCode(question.code, question.codeLanguage)}
               </div>
               <div>
                 <h4 className="font-semibold mb-2">Options:</h4>
@@ -62,8 +80,9 @@ export const QuestionsDisplay = ({ questions }: QuestionsDisplayProps) => {
                 <h4 className="font-semibold mb-2">Explanation:</h4>
                 <p>{question.explanation}</p>
               </div>
-              <div className="flex gap-4 text-sm text-muted-foreground">
+              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span>Topic: {question.topic}</span>
+                <span>Type: {question.questionType}</span>
                 <span>Level: {question.bloomLevel}</span>
               </div>
             </AccordionContent>
