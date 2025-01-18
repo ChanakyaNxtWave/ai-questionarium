@@ -17,6 +17,11 @@ serve(async (req) => {
     const endpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT');
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
 
+    console.log('Checking Azure OpenAI configuration...');
+    console.log('Endpoint:', endpoint ? 'Set' : 'Missing');
+    console.log('Deployment:', deployment ? 'Set' : 'Missing');
+    console.log('API Key:', apiKey ? 'Set' : 'Missing');
+
     if (!apiKey || !endpoint || !deployment) {
       throw new Error('Azure OpenAI configuration is incomplete');
     }
@@ -39,6 +44,8 @@ serve(async (req) => {
     const url = `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
 
     console.log('Making request to Azure OpenAI:', url);
+    console.log('System prompt:', systemPrompt);
+    console.log('User content length:', content.length);
 
     const response = await fetch(url, {
       method: 'POST',
@@ -59,10 +66,13 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.json();
       console.error('Azure OpenAI API error:', error);
-      throw new Error(error.error?.message || 'Failed to generate content');
+      throw new Error(
+        `Azure OpenAI API error (${response.status}): ${error.error?.message || error.message || 'Unknown error'}`
+      );
     }
 
     const data = await response.json();
+    console.log('Azure OpenAI API response status:', response.status);
     console.log('Azure OpenAI API response:', data);
 
     const generatedContent = data.choices[0].message.content;
@@ -75,7 +85,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-content function:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
