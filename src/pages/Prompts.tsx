@@ -1,39 +1,28 @@
 import React from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/components/AuthProvider";
 
 export default function Prompts() {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [editingPrompt, setEditingPrompt] = React.useState<string | null>(null);
   const [content, setContent] = React.useState("");
 
-  const { data: prompts, isLoading, error } = useQuery({
+  const { data: prompts, isLoading } = useQuery({
     queryKey: ["prompts"],
     queryFn: async () => {
-      if (!user) {
-        throw new Error("Not authenticated");
-      }
-
       const { data, error } = await supabase
         .from("prompts")
         .select("*")
         .order("type");
       
-      if (error) {
-        console.error("Error fetching prompts:", error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
-    enabled: !!user,
   });
 
   const handleEdit = (promptId: string, promptContent: string) => {
@@ -42,28 +31,13 @@ export default function Prompts() {
   };
 
   const handleSave = async () => {
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be authenticated to edit prompts",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from("prompts")
-        .update({ 
-          content,
-          updated_at: new Date().toISOString()
-        })
+        .update({ content })
         .eq("id", editingPrompt);
 
       if (error) throw error;
-
-      // Invalidate and refetch queries
-      await queryClient.invalidateQueries({ queryKey: ["prompts"] });
 
       toast({
         title: "Success",
@@ -72,44 +46,18 @@ export default function Prompts() {
 
       setEditingPrompt(null);
     } catch (error) {
-      console.error("Error updating prompt:", error);
       toast({
         title: "Error",
-        description: "Failed to update prompt. Make sure you have the required permissions.",
+        description: "Failed to update prompt",
         variant: "destructive",
       });
     }
   };
 
-  const truncateText = (text: string, maxLength: number = 200) => {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + "...";
-  };
-
-  if (!user) {
-    return (
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-        <p>You must be authenticated to view and edit prompts.</p>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-4">Error</h1>
-        <p className="text-red-500">
-          Failed to load prompts. Make sure you have the required permissions.
-        </p>
       </div>
     );
   }
@@ -145,7 +93,7 @@ export default function Prompts() {
               />
             ) : (
               <pre className="whitespace-pre-wrap bg-muted p-4 rounded-md">
-                {truncateText(prompt.content)}
+                {prompt.content}
               </pre>
             )}
           </Card>
