@@ -1,5 +1,5 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useAuth } from "@/components/AuthProvider";
 export default function Prompts() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [editingPrompt, setEditingPrompt] = React.useState<string | null>(null);
   const [content, setContent] = React.useState("");
 
@@ -32,7 +33,7 @@ export default function Prompts() {
       }
       return data;
     },
-    enabled: !!user, // Only run query if user is authenticated
+    enabled: !!user,
   });
 
   const handleEdit = (promptId: string, promptContent: string) => {
@@ -51,12 +52,17 @@ export default function Prompts() {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("prompts")
-        .update({ content })
-        .eq("id", editingPrompt);
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq("id", editingPrompt)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Invalidate and refetch queries
+      await queryClient.invalidateQueries({ queryKey: ["prompts"] });
 
       toast({
         title: "Success",
@@ -72,6 +78,11 @@ export default function Prompts() {
         variant: "destructive",
       });
     }
+  };
+
+  const truncateText = (text: string, maxLength: number = 200) => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + "...";
   };
 
   if (!user) {
@@ -133,7 +144,7 @@ export default function Prompts() {
               />
             ) : (
               <pre className="whitespace-pre-wrap bg-muted p-4 rounded-md">
-                {prompt.content}
+                {truncateText(prompt.content)}
               </pre>
             )}
           </Card>
