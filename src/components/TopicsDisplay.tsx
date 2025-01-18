@@ -1,4 +1,5 @@
 import React from "react";
+import { Card } from "@/components/ui/card";
 
 interface TopicsDisplayProps {
   topics: string;
@@ -6,11 +7,15 @@ interface TopicsDisplayProps {
 
 export const TopicsDisplay = ({ topics }: TopicsDisplayProps) => {
   return (
-    <div className="mt-8">
+    <Card className="mt-8 p-6">
       <h2 className="text-2xl font-bold mb-4">Generated Topics</h2>
-      <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto whitespace-pre-wrap">
-        {topics}
-      </pre>
-    </div>
+      <div className="prose prose-sm max-w-none">
+        {topics.split('\n').map((line, index) => (
+          <p key={index} className="mb-2">
+            {line}
+          </p>
+        ))}
+      </div>
+    </Card>
   );
 };

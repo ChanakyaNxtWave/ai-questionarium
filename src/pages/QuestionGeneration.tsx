@@ -25,6 +25,7 @@ import * as z from "zod";
 import { Loader2 } from "lucide-react";
 import { TopicsDisplay } from "@/components/TopicsDisplay";
 import { QuestionsDisplay } from "@/components/QuestionsDisplay";
+import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { generateTopics, generateQuestions } from "@/services/questionGeneration";
 
 const formSchema = z.object({
@@ -36,7 +37,8 @@ const formSchema = z.object({
 export default function QuestionGeneration() {
   const { language } = useParams();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isGeneratingTopics, setIsGeneratingTopics] = React.useState(false);
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [topics, setTopics] = React.useState<string>("");
   const [questions, setQuestions] = React.useState<string>("");
@@ -65,16 +67,17 @@ export default function QuestionGeneration() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      setIsLoading(true);
-      
-      // First prompt: Extract topics, subtopics, and learning outcomes
+      // First prompt: Extract topics
+      setIsGeneratingTopics(true);
       const topicsResponse = await generateTopics(values.content);
       if (!topicsResponse.success) {
         throw new Error(topicsResponse.error);
       }
       setTopics(topicsResponse.data || "");
+      setIsGeneratingTopics(false);
 
       // Second prompt: Generate questions
+      setIsGeneratingQuestions(true);
       const questionsResponse = await generateQuestions(values.content, topicsResponse.data || "");
       if (!questionsResponse.success) {
         throw new Error(questionsResponse.error);
@@ -92,7 +95,8 @@ export default function QuestionGeneration() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsGeneratingTopics(false);
+      setIsGeneratingQuestions(false);
     }
   };
 
@@ -180,11 +184,15 @@ export default function QuestionGeneration() {
             )}
           />
 
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? (
+          <Button 
+            type="submit" 
+            disabled={isGeneratingTopics || isGeneratingQuestions}
+            className="w-full"
+          >
+            {(isGeneratingTopics || isGeneratingQuestions) ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating Questions...
+                {isGeneratingTopics ? "Generating Topics..." : "Generating Questions..."}
               </>
             ) : (
               "Generate Questions"
@@ -193,8 +201,15 @@ export default function QuestionGeneration() {
         </form>
       </Form>
 
-      {topics && <TopicsDisplay topics={topics} />}
-      {questions && <QuestionsDisplay questions={questions} />}
+      {isGeneratingTopics && (
+        <LoadingIndicator message="Analyzing content and extracting topics..." />
+      )}
+      {topics && !isGeneratingTopics && <TopicsDisplay topics={topics} />}
+      
+      {isGeneratingQuestions && (
+        <LoadingIndicator message="Generating questions based on topics..." />
+      )}
+      {questions && !isGeneratingQuestions && <QuestionsDisplay questions={questions} />}
     </div>
   );
 }
