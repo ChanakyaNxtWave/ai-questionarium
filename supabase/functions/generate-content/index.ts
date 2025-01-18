@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { content, type, prompt } = await req.json();
+    const { content, type } = await req.json();
 
     if (!azureEndpoint || !azureDeployment || !apiKey) {
       console.error('Missing Azure OpenAI configuration:', {
@@ -27,12 +27,18 @@ serve(async (req) => {
       throw new Error('Azure OpenAI configuration is incomplete');
     }
 
-    let userContent = content;
-    
+    let systemPrompt = '';
     if (type === 'topics') {
-      userContent = prompt.replace('{details}', content);
+      systemPrompt = `You are an expert curriculum designer. Analyze the following content and extract key topics, subtopics, and learning outcomes. Format your response as a structured list with bullet points. Focus on the most important concepts that students should understand.`;
     } else if (type === 'questions') {
-      userContent = prompt.replace('{session_topics_and_learning_outcome}', content);
+      systemPrompt = `You are an expert question designer. Create multiple-choice questions based on the following content. For each question, include:
+      - The topic and concept being tested
+      - Prerequisites
+      - Question text
+      - 4 options (with one correct answer)
+      - Explanation of the correct answer
+      - Bloom's taxonomy level
+      Format as JSON with these fields: topic, concept, prerequisites, questionText, options (array), correctAnswer, explanation, bloomLevel`;
     }
 
     console.log('Making request to Azure OpenAI with:', {
@@ -52,8 +58,8 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: prompt },
-            { role: 'user', content: userContent }
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content }
           ],
           temperature: 0.7,
           max_tokens: 2000,

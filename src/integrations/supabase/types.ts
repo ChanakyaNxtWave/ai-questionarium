@@ -9,62 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      programming_languages: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
-      prompts: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          is_default: boolean | null
-          language_id: string | null
-          type: Database["public"]["Enums"]["prompt_type"]
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          is_default?: boolean | null
-          language_id?: string | null
-          type: Database["public"]["Enums"]["prompt_type"]
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          is_default?: boolean | null
-          language_id?: string | null
-          type?: Database["public"]["Enums"]["prompt_type"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prompts_language_id_fkey"
-            columns: ["language_id"]
-            isOneToOne: false
-            referencedRelation: "programming_languages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -73,7 +18,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      prompt_type: "topics" | "questions"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
