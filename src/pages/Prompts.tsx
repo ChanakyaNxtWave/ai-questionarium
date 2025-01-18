@@ -6,23 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function Prompts() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [editingPrompt, setEditingPrompt] = React.useState<string | null>(null);
   const [content, setContent] = React.useState("");
 
-  const { data: prompts, isLoading } = useQuery({
+  const { data: prompts, isLoading, error } = useQuery({
     queryKey: ["prompts"],
     queryFn: async () => {
+      if (!user) {
+        throw new Error("Not authenticated");
+      }
+
       const { data, error } = await supabase
         .from("prompts")
         .select("*")
         .order("type");
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching prompts:", error);
+        throw error;
+      }
       return data;
     },
+    enabled: !!user, // Only run query if user is authenticated
   });
 
   const handleEdit = (promptId: string, promptContent: string) => {
@@ -31,6 +41,15 @@ export default function Prompts() {
   };
 
   const handleSave = async () => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be authenticated to edit prompts",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("prompts")
@@ -46,18 +65,39 @@ export default function Prompts() {
 
       setEditingPrompt(null);
     } catch (error) {
+      console.error("Error updating prompt:", error);
       toast({
         title: "Error",
-        description: "Failed to update prompt",
+        description: "Failed to update prompt. Make sure you have the required permissions.",
         variant: "destructive",
       });
     }
   };
 
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
+        <p>You must be authenticated to view and edit prompts.</p>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-4">Error</h1>
+        <p className="text-red-500">
+          Failed to load prompts. Make sure you have the required permissions.
+        </p>
       </div>
     );
   }
