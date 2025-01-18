@@ -52,12 +52,13 @@ export default function Prompts() {
     }
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("prompts")
-        .update({ content, updated_at: new Date().toISOString() })
-        .eq("id", editingPrompt)
-        .select()
-        .single();
+        .update({ 
+          content,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", editingPrompt);
 
       if (error) throw error;
 
