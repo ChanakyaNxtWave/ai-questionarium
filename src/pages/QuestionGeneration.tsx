@@ -23,7 +23,6 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
-import { TopicsDisplay } from "@/components/TopicsDisplay";
 import { QuestionsDisplay } from "@/components/QuestionsDisplay";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { generateTopics, generateQuestions } from "@/services/questionGeneration";
@@ -67,7 +66,7 @@ export default function QuestionGeneration() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // First prompt: Extract topics
+      // First prompt: Extract topics (still needed for question generation)
       setIsGeneratingTopics(true);
       const topicsResponse = await generateTopics(values.content);
       if (!topicsResponse.success) {
@@ -86,7 +85,7 @@ export default function QuestionGeneration() {
 
       toast({
         title: "Success",
-        description: "Topics and questions have been generated successfully.",
+        description: "Questions have been generated successfully.",
       });
     } catch (error) {
       toast({
@@ -192,7 +191,7 @@ export default function QuestionGeneration() {
             {(isGeneratingTopics || isGeneratingQuestions) ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isGeneratingTopics ? "Generating Topics..." : "Generating Questions..."}
+                {isGeneratingTopics ? "Analyzing Content..." : "Generating Questions..."}
               </>
             ) : (
               "Generate Questions"
@@ -201,14 +200,15 @@ export default function QuestionGeneration() {
         </form>
       </Form>
 
-      {isGeneratingTopics && (
-        <LoadingIndicator message="Analyzing content and extracting topics..." />
+      {(isGeneratingTopics || isGeneratingQuestions) && (
+        <LoadingIndicator 
+          message={isGeneratingTopics 
+            ? "Analyzing content..." 
+            : "Generating questions..."
+          } 
+        />
       )}
-      {topics && !isGeneratingTopics && <TopicsDisplay topics={topics} />}
       
-      {isGeneratingQuestions && (
-        <LoadingIndicator message="Generating questions based on topics..." />
-      )}
       {questions && !isGeneratingQuestions && <QuestionsDisplay questions={questions} />}
     </div>
   );
