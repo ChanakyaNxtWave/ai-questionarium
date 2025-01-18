@@ -13,10 +13,12 @@ serve(async (req) => {
 
   try {
     const { content, type } = await req.json();
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
+    const endpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT');
+    const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    if (!apiKey || !endpoint || !deployment) {
+      throw new Error('Azure OpenAI configuration is incomplete');
     }
 
     let systemPrompt = '';
@@ -33,27 +35,36 @@ serve(async (req) => {
       Format as JSON with these fields: topic, concept, prerequisites, questionText, options (array), correctAnswer, explanation, bloomLevel`;
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const apiVersion = '2023-05-15';
+    const url = `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
+
+    console.log('Making request to Azure OpenAI:', url);
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'api-key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content }
         ],
+        temperature: 0.7,
+        max_tokens: 2000,
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('Azure OpenAI API error:', error);
       throw new Error(error.error?.message || 'Failed to generate content');
     }
 
     const data = await response.json();
+    console.log('Azure OpenAI API response:', data);
+
     const generatedContent = data.choices[0].message.content;
 
     return new Response(
