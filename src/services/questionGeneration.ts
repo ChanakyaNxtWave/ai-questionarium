@@ -58,3 +58,11 @@ export const generateContent = async (content: string, type: "topics" | "questio
     throw new Error(error.message || "Failed to generate content");
   }
 };
+
+export const generateTopics = async (content: string) => {
+  return generateContent(content, "topics");
+};
+
+export const generateQuestions = async (content: string, topics: string) => {
+  return generateContent(content, "questions");
+};

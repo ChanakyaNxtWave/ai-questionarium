@@ -110,7 +110,7 @@ const PromptManagement = () => {
     }
   };
 
-  if (loading) return <LoadingIndicator />;
+  if (loading) return <LoadingIndicator message="Loading prompts..." />;
 
   return (
     <div className="container mx-auto p-8">
