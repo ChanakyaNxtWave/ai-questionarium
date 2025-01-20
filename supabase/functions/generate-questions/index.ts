@@ -6,12 +6,14 @@ interface RequestBody {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { content } = await req.json() as RequestBody;
+    console.log('Received content:', content);
 
     const prompt = `I want you to act as a technical instructional designer with 10 years of experience in technical curriculum design and development.
 
@@ -50,9 +52,12 @@ BLOOM_LEVEL: [Bloom's taxonomy level]
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
 
     if (!azureEndpoint || !apiKey) {
+      console.error('Missing Azure OpenAI credentials');
       throw new Error('Azure OpenAI credentials not configured');
     }
 
+    console.log('Making request to Azure OpenAI API...');
+    
     const response = await fetch(
       `${azureEndpoint}/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15`,
       {
@@ -79,24 +84,45 @@ BLOOM_LEVEL: [Bloom's taxonomy level]
     );
 
     if (!response.ok) {
-      throw new Error('Failed to generate questions');
+      const errorText = await response.text();
+      console.error('Azure OpenAI API error:', errorText);
+      throw new Error(`Azure OpenAI API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('Received response from Azure OpenAI');
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid response format from Azure OpenAI:', data);
+      throw new Error('Invalid response format from Azure OpenAI');
+    }
+
     const rawQuestions = data.choices[0].message.content;
+    console.log('Generated questions:', rawQuestions);
     
     return new Response(
       JSON.stringify({ questions: rawQuestions }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in generate-questions function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'An error occurred while generating questions',
+        details: error.toString()
+      }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
       }
     );
   }
