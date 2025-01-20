@@ -9,6 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      generated_questions: {
+        Row: {
+          bloom_level: string
+          code: string | null
+          code_language: string | null
+          concept: string
+          content_type: string
+          correct_option: string
+          created_at: string
+          explanation: string
+          id: string
+          is_selected: boolean | null
+          learning_outcome: string
+          options: string[]
+          question_key: string
+          question_text: string
+          question_type: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          bloom_level: string
+          code?: string | null
+          code_language?: string | null
+          concept: string
+          content_type: string
+          correct_option: string
+          created_at?: string
+          explanation: string
+          id?: string
+          is_selected?: boolean | null
+          learning_outcome: string
+          options: string[]
+          question_key: string
+          question_text: string
+          question_type: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          bloom_level?: string
+          code?: string | null
+          code_language?: string | null
+          concept?: string
+          content_type?: string
+          correct_option?: string
+          created_at?: string
+          explanation?: string
+          id?: string
+          is_selected?: boolean | null
+          learning_outcome?: string
+          options?: string[]
+          question_key?: string
+          question_text?: string
+          question_type?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       programming_languages: {
         Row: {
           created_at: string
