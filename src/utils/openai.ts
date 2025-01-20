@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 interface OpenAIResponse {
   topic: string;
   concept: string;
@@ -15,77 +17,14 @@ interface OpenAIResponse {
 }
 
 export const generateQuestions = async (content: string): Promise<OpenAIResponse[]> => {
-  const endpoint = import.meta.env.VITE_AZURE_OPENAI_ENDPOINT;
-  const apiKey = import.meta.env.VITE_AZURE_OPENAI_API_KEY;
-
-  if (!endpoint || !apiKey) {
-    throw new Error('Azure OpenAI credentials not found');
-  }
-
-  const prompt = `I want you to act as a technical instructional designer with 10 years of experience in technical curriculum design and development.
-
-Given the following content:
-
-${content}
-
-Generate 5 multiple choice questions (MCQs) that test understanding of the content. For each question:
-
-1. Identify the specific topic and concept being tested
-2. Create a clear question with 4 options
-3. Provide the correct answer and a detailed explanation
-4. Assign an appropriate Bloom's taxonomy level
-
-Format each question as follows:
-
-TOPIC: [Topic name]
-CONCEPT: [Specific concept]
-QUESTION_KEY: [Unique identifier]
-QUESTION_TEXT: [The actual question]
-LEARNING_OUTCOME: [What the question tests]
-CONTENT_TYPE: [text/code]
-QUESTION_TYPE: [conceptual/analytical/application]
-CODE: [Any code snippet, or NA if none]
-CODE_LANGUAGE: [Programming language of code, or NA]
-OPTION_1: [First option]
-OPTION_2: [Second option]
-OPTION_3: [Third option]
-OPTION_4: [Fourth option]
-CORRECT_OPTION: [The correct option text]
-EXPLANATION: [Detailed explanation of the correct answer]
-BLOOM_LEVEL: [Bloom's taxonomy level]
--END-`;
-
   try {
-    const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': apiKey,
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a technical instructional designer specialized in creating SQL MCQs.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
+    const { data, error } = await supabase.functions.invoke('generate-questions', {
+      body: { content },
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to generate questions');
-    }
+    if (error) throw error;
 
-    const data = await response.json();
-    const rawQuestions = data.choices[0].message.content;
-    
-    // Parse the response into structured questions
+    const rawQuestions = data.questions;
     const questions = parseOpenAIResponse(rawQuestions);
     return questions;
   } catch (error) {
