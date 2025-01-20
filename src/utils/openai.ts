@@ -37,65 +37,72 @@ const parseOpenAIResponse = (response: string): OpenAIResponse[] => {
   const questions: OpenAIResponse[] = [];
   const questionBlocks = response.split('-END-').filter(block => block.trim());
 
+  const pattern = /(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):([\s\S]*?)(?=(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):|$)/g;
+
   for (const block of questionBlocks) {
     try {
-      const lines = block.trim().split('\n');
-      const question: any = {};
+      const matches = Array.from(block.matchAll(pattern));
+      const question: any = {
+        options: []
+      };
 
-      for (const line of lines) {
-        if (line.includes(':')) {
-          const [key, ...valueParts] = line.split(':');
-          const value = valueParts.join(':').trim();
+      for (const match of matches) {
+        const [, key, value] = match;
+        const trimmedValue = value.trim();
 
-          switch (key.trim()) {
-            case 'TOPIC':
-              question.topic = value;
-              break;
-            case 'CONCEPT':
-              question.concept = value;
-              break;
-            case 'QUESTION_KEY':
-              question.questionKey = value;
-              break;
-            case 'QUESTION_TEXT':
-              question.questionText = value;
-              break;
-            case 'LEARNING_OUTCOME':
-              question.learningOutcome = value;
-              break;
-            case 'CONTENT_TYPE':
-              question.contentType = value;
-              break;
-            case 'QUESTION_TYPE':
-              question.questionType = value;
-              break;
-            case 'CODE':
-              question.code = value === 'NA' ? 'NA' : value;
-              break;
-            case 'CODE_LANGUAGE':
-              question.codeLanguage = value;
-              break;
-            case 'OPTION_1':
-            case 'OPTION_2':
-            case 'OPTION_3':
-            case 'OPTION_4':
-              if (!question.options) question.options = [];
-              question.options.push(value);
-              break;
-            case 'CORRECT_OPTION':
-              question.correctOption = value;
-              break;
-            case 'EXPLANATION':
-              question.explanation = value;
-              break;
-            case 'BLOOM_LEVEL':
-              question.bloomLevel = value;
-              break;
-          }
+        switch (key) {
+          case 'TOPIC':
+            question.topic = trimmedValue;
+            break;
+          case 'CONCEPT':
+            question.concept = trimmedValue;
+            break;
+          case 'QUESTION_KEY':
+            question.questionKey = trimmedValue;
+            break;
+          case 'QUESTION_TEXT':
+            question.questionText = trimmedValue;
+            break;
+          case 'LEARNING_OUTCOME':
+            question.learningOutcome = trimmedValue;
+            break;
+          case 'CONTENT_TYPE':
+            question.contentType = trimmedValue;
+            break;
+          case 'QUESTION_TYPE':
+            question.questionType = trimmedValue;
+            break;
+          case 'CODE':
+            question.code = trimmedValue === 'NA' ? 'NA' : trimmedValue;
+            break;
+          case 'CODE_LANGUAGE':
+            question.codeLanguage = trimmedValue;
+            break;
+          case 'CORRECT_OPTION':
+            question.correctOption = trimmedValue;
+            break;
+          case 'EXPLANATION':
+            question.explanation = trimmedValue;
+            break;
+          case 'BLOOM_LEVEL':
+            question.bloomLevel = trimmedValue;
+            break;
+          default:
+            if (key.startsWith('OPTION_') && !key.endsWith('_ID')) {
+              question.options.push(trimmedValue);
+            }
+            break;
         }
       }
 
-      if (Object.keys(question).length > 0) {
+      // Only add questions that have all required fields
+      if (
+        question.topic &&
+        question.concept &&
+        question.questionKey &&
+        question.questionText &&
+        question.options.length > 0
+      ) {
         questions.push(question as OpenAIResponse);
       }
     } catch (error) {
