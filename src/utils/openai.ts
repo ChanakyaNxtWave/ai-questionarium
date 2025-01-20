@@ -1,7 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
 interface OpenAIResponse {
-  id?: string;
   topic: string;
   concept: string;
   questionKey: string;
@@ -15,7 +14,6 @@ interface OpenAIResponse {
   correctOption: string;
   explanation: string;
   bloomLevel: string;
-  is_selected?: boolean;
 }
 
 export const generateQuestions = async (content: string): Promise<OpenAIResponse[]> => {
@@ -120,6 +118,7 @@ const parseOpenAIResponse = (response: string): OpenAIResponse[] => {
 
       console.log('Constructed question object:', question);
 
+      // Only add questions that have all required fields
       if (
         question.topic &&
         question.concept &&
