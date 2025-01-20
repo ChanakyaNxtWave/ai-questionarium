@@ -21,12 +21,12 @@ export const TopicsSelection = ({
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold mb-4">Select Topics</h2>
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {topics.map((topicData, index) => (
           <div
             key={topicData.Topic}
             className={cn(
-              "p-4 rounded-lg border transition-all duration-200",
+              "p-4 rounded-lg border transition-all duration-200 hover:shadow-md",
               selectedTopics.includes(topicData.Topic)
                 ? "border-primary bg-primary/5"
                 : "border-gray-200 hover:border-primary/50"
@@ -36,7 +36,7 @@ export const TopicsSelection = ({
               onClick={() => onTopicSelect(topicData.Topic)}
               className="w-full text-left"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
