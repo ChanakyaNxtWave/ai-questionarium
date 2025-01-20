@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
 import { MCQDisplay } from "@/components/MCQDisplay";
 import { generateQuestions } from "@/utils/openai";
+import { supabase } from "@/integrations/supabase/client";
 
 const sqlTopics = [
   {
@@ -105,6 +106,30 @@ export default function QuestionGeneration() {
     },
   });
 
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('generated_questions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setGeneratedQuestions(data || []);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch questions. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleTopicSelect = (topic: string) => {
     const topicIndex = sqlTopics.findIndex((t) => t.Topic === topic);
     const topicsToSelect = sqlTopics
@@ -126,6 +151,16 @@ export default function QuestionGeneration() {
     }
   };
 
+  const handleQuestionDelete = (id: string) => {
+    setGeneratedQuestions((prev) => prev.filter((q) => q.id !== id));
+  };
+
+  const handleQuestionSelect = (id: string, isSelected: boolean) => {
+    setGeneratedQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, is_selected: isSelected } : q))
+    );
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (selectedTopics.length === 0) {
       toast({
@@ -139,7 +174,28 @@ export default function QuestionGeneration() {
     try {
       setIsLoading(true);
       const questions = await generateQuestions(values.content);
-      setGeneratedQuestions(questions);
+      
+      // Delete unselected questions before adding new ones
+      const { error: deleteError } = await supabase
+        .from('generated_questions')
+        .delete()
+        .eq('is_selected', false);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new questions
+      const { error: insertError } = await supabase
+        .from('generated_questions')
+        .insert(questions.map(q => ({
+          ...q,
+          is_selected: false
+        })));
+
+      if (insertError) throw insertError;
+
+      // Fetch updated questions
+      await fetchQuestions();
+
       toast({
         title: "Questions Generated",
         description: "Your questions have been generated successfully.",
@@ -148,7 +204,7 @@ export default function QuestionGeneration() {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate questions. Please check your API credentials and try again.",
+        description: "Failed to generate questions. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -274,7 +330,12 @@ export default function QuestionGeneration() {
 
       {generatedQuestions.length > 0 && (
         <div className="mt-12">
-          <MCQDisplay questions={generatedQuestions} />
+          <MCQDisplay
+            questions={generatedQuestions}
+            onQuestionDelete={handleQuestionDelete}
+            onQuestionSelect={handleQuestionSelect}
+            onQuestionsUpdate={fetchQuestions}
+          />
         </div>
       )}
     </div>
