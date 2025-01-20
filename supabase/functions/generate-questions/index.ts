@@ -1,9 +1,14 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 interface RequestBody {
   content: string;
 }
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 Deno.serve(async (req) => {
   // Handle CORS
@@ -50,16 +55,18 @@ BLOOM_LEVEL: [Bloom's taxonomy level]
 
     const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT');
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
+    const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
 
-    if (!azureEndpoint || !apiKey) {
-      console.error('Missing Azure OpenAI credentials');
-      throw new Error('Azure OpenAI credentials not configured');
+    if (!azureEndpoint || !apiKey || !deployment) {
+      console.error('Missing Azure OpenAI credentials or deployment name');
+      throw new Error('Azure OpenAI configuration incomplete');
     }
 
     console.log('Making request to Azure OpenAI API...');
+    console.log('Using deployment:', deployment);
     
     const response = await fetch(
-      `${azureEndpoint}/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15`,
+      `${azureEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`,
       {
         method: 'POST',
         headers: {
