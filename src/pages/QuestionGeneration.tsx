@@ -25,6 +25,7 @@ import * as z from "zod";
 import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
 import { MCQDisplay } from "@/components/MCQDisplay";
+import { generateQuestions } from "@/utils/openai";
 
 const sqlTopics = [
   {
@@ -125,24 +126,6 @@ export default function QuestionGeneration() {
     }
   };
 
-  const generatePrompt = (content: string) => {
-    return `I want you to act as a technical instructional designer with 10 years of experience in technical curriculum design and development.
-
-You have two tasks
-
-### Task - 1:
-
-${content}
-
-Your task is to generate a list of learning outcomes based on the given content.
-
-These learning outcomes will be tagged to the questions to understand the effectiveness of the content through data gathered from the users.
-
-### Task - 2:
-
-[Rest of the prompt...]`;
-  };
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (selectedTopics.length === 0) {
       toast({
@@ -155,34 +138,17 @@ These learning outcomes will be tagged to the questions to understand the effect
 
     try {
       setIsLoading(true);
-      // TODO: Replace with actual API call to generate questions
-      const mockQuestions = [
-        {
-          topic: "Querying",
-          concept: "Comparison Operators",
-          questionKey: "Q2SQL",
-          questionText: "Which SQL operator is used to select rows where a column value is not equal to a specific value?",
-          learningOutcome: "introduction_to_sql_operators",
-          contentType: "TEXT",
-          questionType: "MULTIPLE_CHOICE",
-          code: "NA",
-          codeLanguage: "NA",
-          options: ["=", "<>", "<=", ">"],
-          correctOption: "OPTION_2",
-          explanation: "The SQL operator '<>' is used to select rows where a column value is not equal to a specific value.",
-          bloomLevel: "REMEMBERING"
-        }
-      ];
-      
-      setGeneratedQuestions(mockQuestions);
+      const questions = await generateQuestions(values.content);
+      setGeneratedQuestions(questions);
       toast({
         title: "Questions Generated",
         description: "Your questions have been generated successfully.",
       });
     } catch (error) {
+      console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate questions. Please try again.",
+        description: "Failed to generate questions. Please check your API credentials and try again.",
         variant: "destructive",
       });
     } finally {
