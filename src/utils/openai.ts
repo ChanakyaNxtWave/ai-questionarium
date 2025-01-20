@@ -24,19 +24,36 @@ export const generateQuestions = async (content: string): Promise<OpenAIResponse
 
   const prompt = `I want you to act as a technical instructional designer with 10 years of experience in technical curriculum design and development.
 
-You have two tasks
-
-### Task - 1:
+Given the following content:
 
 ${content}
 
-Your task is to generate a list of learning outcomes based on the given content.
+Generate 5 multiple choice questions (MCQs) that test understanding of the content. For each question:
 
-These learning outcomes will be tagged to the questions to understand the effectiveness of the content through data gathered from the users.
+1. Identify the specific topic and concept being tested
+2. Create a clear question with 4 options
+3. Provide the correct answer and a detailed explanation
+4. Assign an appropriate Bloom's taxonomy level
 
-### Task - 2:
+Format each question as follows:
 
-[Rest of your provided prompt...]`;
+TOPIC: [Topic name]
+CONCEPT: [Specific concept]
+QUESTION_KEY: [Unique identifier]
+QUESTION_TEXT: [The actual question]
+LEARNING_OUTCOME: [What the question tests]
+CONTENT_TYPE: [text/code]
+QUESTION_TYPE: [conceptual/analytical/application]
+CODE: [Any code snippet, or NA if none]
+CODE_LANGUAGE: [Programming language of code, or NA]
+OPTION_1: [First option]
+OPTION_2: [Second option]
+OPTION_3: [Third option]
+OPTION_4: [Fourth option]
+CORRECT_OPTION: [The correct option text]
+EXPLANATION: [Detailed explanation of the correct answer]
+BLOOM_LEVEL: [Bloom's taxonomy level]
+-END-`;
 
   try {
     const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15`, {
