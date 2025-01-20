@@ -183,13 +183,28 @@ export default function QuestionGeneration() {
 
       if (deleteError) throw deleteError;
 
+      // Map the questions to match the database schema
+      const mappedQuestions = questions.map(q => ({
+        bloom_level: q.bloomLevel,
+        code: q.code,
+        code_language: q.codeLanguage,
+        concept: q.concept,
+        content_type: q.contentType,
+        correct_option: q.correctOption,
+        explanation: q.explanation,
+        is_selected: false,
+        learning_outcome: q.learningOutcome,
+        options: q.options,
+        question_key: q.questionKey,
+        question_text: q.questionText,
+        question_type: q.questionType,
+        topic: q.topic
+      }));
+
       // Insert new questions
       const { error: insertError } = await supabase
         .from('generated_questions')
-        .insert(questions.map(q => ({
-          ...q,
-          is_selected: false
-        })));
+        .insert(mappedQuestions);
 
       if (insertError) throw insertError;
 
