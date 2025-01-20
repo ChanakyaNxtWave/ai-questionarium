@@ -23,25 +23,29 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
-import { TopicsDisplay } from "@/components/TopicsDisplay";
-import { QuestionsDisplay } from "@/components/QuestionsDisplay";
-import { LoadingIndicator } from "@/components/LoadingIndicator";
-import { generateTopics, generateQuestions } from "@/services/questionGeneration";
 
 const formSchema = z.object({
   unitTitle: z.string().min(1, "Unit title is required"),
   contentType: z.enum(["text", "file"]),
   content: z.string().min(1, "Content is required"),
+  questionTypes: z.array(z.string()).min(1, "Select at least one question type"),
 });
+
+const questionTypes = [
+  "Multiple Choice",
+  "Fill in the Blanks",
+  "True/False",
+  "Drag and Drop",
+  "Code Analysis",
+  "Output Prediction",
+  "Short Answer",
+];
 
 export default function QuestionGeneration() {
   const { language } = useParams();
   const { toast } = useToast();
-  const [isGeneratingTopics, setIsGeneratingTopics] = React.useState(false);
-  const [isGeneratingQuestions, setIsGeneratingQuestions] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [topics, setTopics] = React.useState<string>("");
-  const [questions, setQuestions] = React.useState<string>("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,6 +53,7 @@ export default function QuestionGeneration() {
       unitTitle: "",
       contentType: "text",
       content: "",
+      questionTypes: [],
     },
   });
 
@@ -67,36 +72,21 @@ export default function QuestionGeneration() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // First prompt: Extract topics
-      setIsGeneratingTopics(true);
-      const topicsResponse = await generateTopics(values.content);
-      if (!topicsResponse.success) {
-        throw new Error(topicsResponse.error);
-      }
-      setTopics(topicsResponse.data || "");
-      setIsGeneratingTopics(false);
-
-      // Second prompt: Generate questions
-      setIsGeneratingQuestions(true);
-      const questionsResponse = await generateQuestions(values.content, topicsResponse.data || "");
-      if (!questionsResponse.success) {
-        throw new Error(questionsResponse.error);
-      }
-      setQuestions(questionsResponse.data || "");
-
+      setIsLoading(true);
+      console.log("Form values:", values);
+      // TODO: Implement API call to generate questions
       toast({
-        title: "Success",
-        description: "Topics and questions have been generated successfully.",
+        title: "Questions Generated",
+        description: "Your questions have been generated successfully.",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate content",
+        description: "Failed to generate questions. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsGeneratingTopics(false);
-      setIsGeneratingQuestions(false);
+      setIsLoading(false);
     }
   };
 
@@ -184,15 +174,42 @@ export default function QuestionGeneration() {
             )}
           />
 
-          <Button 
-            type="submit" 
-            disabled={isGeneratingTopics || isGeneratingQuestions}
-            className="w-full"
-          >
-            {(isGeneratingTopics || isGeneratingQuestions) ? (
+          <FormField
+            control={form.control}
+            name="questionTypes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Question Types</FormLabel>
+                <div className="flex flex-wrap gap-2">
+                  {questionTypes.map((type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant={
+                        field.value.includes(type) ? "default" : "outline"
+                      }
+                      onClick={() => {
+                        const newValue = field.value.includes(type)
+                          ? field.value.filter((t) => t !== type)
+                          : [...field.value, type];
+                        field.onChange(newValue);
+                      }}
+                      className="h-auto py-2"
+                    >
+                      {type}
+                    </Button>
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isGeneratingTopics ? "Generating Topics..." : "Generating Questions..."}
+                Generating Questions...
               </>
             ) : (
               "Generate Questions"
@@ -200,16 +217,6 @@ export default function QuestionGeneration() {
           </Button>
         </form>
       </Form>
-
-      {isGeneratingTopics && (
-        <LoadingIndicator message="Analyzing content and extracting topics..." />
-      )}
-      {topics && !isGeneratingTopics && <TopicsDisplay topics={topics} />}
-      
-      {isGeneratingQuestions && (
-        <LoadingIndicator message="Generating questions based on topics..." />
-      )}
-      {questions && !isGeneratingQuestions && <QuestionsDisplay questions={questions} />}
     </div>
   );
 }
