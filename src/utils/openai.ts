@@ -16,18 +16,10 @@ interface OpenAIResponse {
   bloomLevel: string;
 }
 
-interface TopicData {
-  topic: string;
-  concepts: string[];
-}
-
-export const generateQuestions = async (content: string, selectedTopics: TopicData[]): Promise<OpenAIResponse[]> => {
+export const generateQuestions = async (content: string): Promise<OpenAIResponse[]> => {
   try {
     const { data, error } = await supabase.functions.invoke('generate-questions', {
-      body: { 
-        content,
-        selectedTopics 
-      },
+      body: { content },
     });
 
     if (error) throw error;

@@ -106,12 +106,11 @@ export default function QuestionGeneration() {
   });
 
   const handleTopicSelect = (topic: string) => {
-    setSelectedTopics((prev) => {
-      if (prev.includes(topic)) {
-        return prev.filter((t) => t !== topic);
-      }
-      return [...prev, topic];
-    });
+    const topicIndex = sqlTopics.findIndex((t) => t.Topic === topic);
+    const topicsToSelect = sqlTopics
+      .slice(0, topicIndex + 1)
+      .map((t) => t.Topic);
+    setSelectedTopics(topicsToSelect);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,17 +136,9 @@ export default function QuestionGeneration() {
       return;
     }
 
-    // Get all concepts for selected topics
-    const selectedTopicsData = sqlTopics
-      .filter((topic) => selectedTopics.includes(topic.Topic))
-      .map((topic) => ({
-        topic: topic.Topic,
-        concepts: topic.Concept,
-      }));
-
     try {
       setIsLoading(true);
-      const questions = await generateQuestions(values.content, selectedTopicsData);
+      const questions = await generateQuestions(values.content);
       setGeneratedQuestions(questions);
       toast({
         title: "Questions Generated",
@@ -157,7 +148,7 @@ export default function QuestionGeneration() {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate questions. Please try again.",
+        description: "Failed to generate questions. Please check your API credentials and try again.",
         variant: "destructive",
       });
     } finally {
@@ -165,6 +156,7 @@ export default function QuestionGeneration() {
     }
   };
 
+  // Only show SQL topics for the SQL route
   if (language !== "sql") {
     return (
       <div className="container mx-auto px-4 py-8">
