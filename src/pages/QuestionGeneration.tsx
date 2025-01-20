@@ -24,6 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
+import { MCQDisplay } from "@/components/MCQDisplay";
 
 const sqlTopics = [
   {
@@ -92,6 +93,7 @@ export default function QuestionGeneration() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [selectedTopics, setSelectedTopics] = React.useState<string[]>([]);
+  const [generatedQuestions, setGeneratedQuestions] = React.useState<any[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -123,6 +125,24 @@ export default function QuestionGeneration() {
     }
   };
 
+  const generatePrompt = (content: string) => {
+    return `I want you to act as a technical instructional designer with 10 years of experience in technical curriculum design and development.
+
+You have two tasks
+
+### Task - 1:
+
+${content}
+
+Your task is to generate a list of learning outcomes based on the given content.
+
+These learning outcomes will be tagged to the questions to understand the effectiveness of the content through data gathered from the users.
+
+### Task - 2:
+
+[Rest of the prompt...]`;
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (selectedTopics.length === 0) {
       toast({
@@ -135,9 +155,26 @@ export default function QuestionGeneration() {
 
     try {
       setIsLoading(true);
-      console.log("Form values:", values);
-      console.log("Selected topics:", selectedTopics);
-      // TODO: Implement API call to generate questions
+      // TODO: Replace with actual API call to generate questions
+      const mockQuestions = [
+        {
+          topic: "Querying",
+          concept: "Comparison Operators",
+          questionKey: "Q2SQL",
+          questionText: "Which SQL operator is used to select rows where a column value is not equal to a specific value?",
+          learningOutcome: "introduction_to_sql_operators",
+          contentType: "TEXT",
+          questionType: "MULTIPLE_CHOICE",
+          code: "NA",
+          codeLanguage: "NA",
+          options: ["=", "<>", "<=", ">"],
+          correctOption: "OPTION_2",
+          explanation: "The SQL operator '<>' is used to select rows where a column value is not equal to a specific value.",
+          bloomLevel: "REMEMBERING"
+        }
+      ];
+      
+      setGeneratedQuestions(mockQuestions);
       toast({
         title: "Questions Generated",
         description: "Your questions have been generated successfully.",
@@ -152,6 +189,17 @@ export default function QuestionGeneration() {
       setIsLoading(false);
     }
   };
+
+  // Only show SQL topics for the SQL route
+  if (language !== "sql") {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">
+          Question generation for {language} is coming soon!
+        </h1>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -257,6 +305,12 @@ export default function QuestionGeneration() {
           </Button>
         </form>
       </Form>
+
+      {generatedQuestions.length > 0 && (
+        <div className="mt-12">
+          <MCQDisplay questions={generatedQuestions} />
+        </div>
+      )}
     </div>
   );
 }
