@@ -26,17 +26,26 @@ interface MCQDisplayProps {
 }
 
 export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => {
-  const [questions, setQuestions] = useState(initialQuestions);
+  const [questions, setQuestions] = useState<MCQ[]>(initialQuestions.map(q => ({
+    ...q,
+    id: q.id || q.questionKey // fallback to questionKey if id is not present
+  })));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<MCQ | null>(null);
   const { toast } = useToast();
 
   const handleEdit = (question: MCQ) => {
-    if (!question.id) {
+    const id = question.id || question.questionKey;
+    if (!id) {
       console.error('Question ID is undefined');
+      toast({
+        title: "Error",
+        description: "Cannot edit question: ID is missing",
+        variant: "destructive",
+      });
       return;
     }
-    setEditingId(question.id);
+    setEditingId(id);
     setEditedQuestion({ ...question });
   };
 
@@ -46,8 +55,14 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   };
 
   const handleSaveEdit = async (question: MCQ) => {
-    if (!question.id || !editedQuestion) {
+    const id = question.id || question.questionKey;
+    if (!id || !editedQuestion) {
       console.error('Question ID or edited question is undefined');
+      toast({
+        title: "Error",
+        description: "Cannot save question: Missing required data",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -60,12 +75,12 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
           options: editedQuestion.options,
           correct_option: editedQuestion.correctOption,
         })
-        .eq('id', question.id);
+        .eq('id', id);
 
       if (error) throw error;
 
       setQuestions(questions.map(q => 
-        q.id === question.id ? { ...q, ...editedQuestion } : q
+        q.id === id ? { ...q, ...editedQuestion } : q
       ));
       
       toast({
@@ -85,9 +100,15 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (question: MCQ) => {
+    const id = question.id || question.questionKey;
     if (!id) {
       console.error('Question ID is undefined');
+      toast({
+        title: "Error",
+        description: "Cannot delete question: ID is missing",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -120,7 +141,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       <h2 className="text-2xl font-semibold mb-6">Generated Questions</h2>
       {questions.map((question, index) => (
         <div
-          key={question.id}
+          key={question.id || question.questionKey}
           className="p-6 border rounded-lg space-y-4 bg-white shadow-sm"
         >
           <div className="flex justify-between items-start">
@@ -228,7 +249,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => handleDelete(question.id)}
+                    onClick={() => handleDelete(question)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
