@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
 interface MCQ {
   id: string;
@@ -26,7 +27,13 @@ interface MCQDisplayProps {
 }
 
 export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => {
-  const [questions, setQuestions] = useState<MCQ[]>(initialQuestions);
+  // Assign UUIDs to questions that don't have them
+  const [questions, setQuestions] = useState<MCQ[]>(
+    initialQuestions.map(q => ({
+      ...q,
+      id: q.id || uuidv4() // Generate UUID if not present
+    }))
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<MCQ | null>(null);
   const { toast } = useToast();
@@ -62,22 +69,6 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     }
 
     try {
-      // First, try to fetch the question to get its UUID
-      const { data: questionData, error: fetchError } = await supabase
-        .from('generated_questions')
-        .select('id')
-        .eq('question_key', question.questionKey)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching question:', fetchError);
-        throw fetchError;
-      }
-
-      if (!questionData?.id) {
-        throw new Error('Question not found in database');
-      }
-
       const { error: updateError } = await supabase
         .from('generated_questions')
         .update({
@@ -86,7 +77,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
           options: editedQuestion.options,
           correct_option: editedQuestion.correctOption,
         })
-        .eq('id', questionData.id);
+        .eq('question_key', question.questionKey);
 
       if (updateError) throw updateError;
 
@@ -123,26 +114,10 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     }
 
     try {
-      // First, try to fetch the question to get its UUID
-      const { data: questionData, error: fetchError } = await supabase
-        .from('generated_questions')
-        .select('id')
-        .eq('question_key', question.questionKey)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching question:', fetchError);
-        throw fetchError;
-      }
-
-      if (!questionData?.id) {
-        throw new Error('Question not found in database');
-      }
-
       const { error: deleteError } = await supabase
         .from('generated_questions')
         .delete()
-        .eq('id', questionData.id);
+        .eq('question_key', question.questionKey);
 
       if (deleteError) throw deleteError;
 
@@ -167,7 +142,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       <h2 className="text-2xl font-semibold mb-6">Generated Questions</h2>
       {questions.map((question, index) => (
         <div
-          key={question.id || question.questionKey}
+          key={question.id}
           className="p-6 border rounded-lg space-y-4 bg-white shadow-sm"
         >
           <div className="flex justify-between items-start">
