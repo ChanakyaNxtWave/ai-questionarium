@@ -26,7 +26,7 @@ You have two tasks
 
 ### Task - 1:
 
-{CONTENT}
+${content}
 
 Your task is to generate a list of learning outcomes based on the given content.
 
