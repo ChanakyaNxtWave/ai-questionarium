@@ -140,8 +140,11 @@ export default function QuestionGeneration() {
       const newQuestions = await generateQuestions(values.content);
       
       if (newQuestions && newQuestions.length > 0) {
-        // Navigate to the questions page with the unit title
-        navigate(`/questions/${language}/${encodeURIComponent(values.unitTitle)}`);
+        // Pass selected topics as URL-encoded state
+        navigate(
+          `/questions/${language}/${encodeURIComponent(values.unitTitle)}`,
+          { state: { selectedTopics } }
+        );
       }
       
       toast({
