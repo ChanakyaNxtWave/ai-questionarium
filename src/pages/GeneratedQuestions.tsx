@@ -30,15 +30,19 @@ export default function GeneratedQuestions() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>(
     location.state?.selectedTopics || []
   );
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
+        setIsLoading(true);
+        console.log('Fetching questions for topic:', unitTitle);
+        
         const { data, error } = await supabase
           .from('generated_questions')
           .select('*')
-          .eq('topic', decodeURIComponent(unitTitle || ''))
+          .ilike('topic', decodeURIComponent(unitTitle || ''))
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -50,6 +54,8 @@ export default function GeneratedQuestions() {
           });
           return;
         }
+
+        console.log('Fetched data:', data);
 
         if (data) {
           // Map the database fields to our Question interface
@@ -79,6 +85,8 @@ export default function GeneratedQuestions() {
           description: "An unexpected error occurred",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -107,11 +115,15 @@ export default function GeneratedQuestions() {
         />
       </div>
 
-      {questions.length > 0 ? (
+      {isLoading ? (
+        <div className="text-center py-8 text-gray-500">
+          Loading questions...
+        </div>
+      ) : questions.length > 0 ? (
         <MCQDisplay questions={questions} />
       ) : (
         <div className="text-center py-8 text-gray-500">
-          No questions found for this unit.
+          No questions found for this unit. Please make sure questions have been generated.
         </div>
       )}
     </div>
