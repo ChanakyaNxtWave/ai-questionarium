@@ -1,6 +1,6 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +24,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
-import { MCQDisplay } from "@/components/MCQDisplay";
 import { generateQuestions } from "@/utils/openai";
 
 const sqlTopics = [
@@ -90,11 +89,11 @@ const formSchema = z.object({
 
 export default function QuestionGeneration() {
   const { language } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [selectedTopics, setSelectedTopics] = React.useState<string[]>([]);
-  const [generatedQuestions, setGeneratedQuestions] = React.useState<any[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -139,8 +138,12 @@ export default function QuestionGeneration() {
     try {
       setIsLoading(true);
       const newQuestions = await generateQuestions(values.content);
-      // Append new questions to existing ones
-      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
+      
+      if (newQuestions && newQuestions.length > 0) {
+        // Navigate to the questions page with the unit title
+        navigate(`/questions/${language}/${encodeURIComponent(values.unitTitle)}`);
+      }
+      
       toast({
         title: "Questions Generated",
         description: "Your questions have been generated successfully.",
@@ -156,17 +159,6 @@ export default function QuestionGeneration() {
       setIsLoading(false);
     }
   };
-
-  // Only show SQL topics for the SQL route
-  if (language !== "sql") {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">
-          Question generation for {language} is coming soon!
-        </h1>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -272,12 +264,6 @@ export default function QuestionGeneration() {
           </Button>
         </form>
       </Form>
-
-      {generatedQuestions.length > 0 && (
-        <div className="mt-12">
-          <MCQDisplay questions={generatedQuestions} />
-        </div>
-      )}
     </div>
   );
 }
