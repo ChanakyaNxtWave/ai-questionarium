@@ -38,6 +38,7 @@ export default function GeneratedQuestions() {
         const { data, error } = await supabase
           .from('generated_questions')
           .select('*')
+          .eq('topic', decodeURIComponent(unitTitle || ''))
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -69,12 +70,7 @@ export default function GeneratedQuestions() {
             bloomLevel: item.bloom_level
           }));
 
-          // Filter questions based on selected topics
-          const filteredQuestions = mappedQuestions.filter(question =>
-            selectedTopics.includes(question.topic)
-          );
-
-          setQuestions(filteredQuestions);
+          setQuestions(mappedQuestions);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -87,7 +83,7 @@ export default function GeneratedQuestions() {
     };
 
     fetchQuestions();
-  }, [selectedTopics]); // Re-fetch when selected topics change
+  }, [unitTitle]); // Re-fetch when unit title changes
 
   const handleTopicSelect = (topic: string) => {
     const topicIndex = sqlTopics.findIndex((t) => t.Topic === topic);
@@ -115,7 +111,7 @@ export default function GeneratedQuestions() {
         <MCQDisplay questions={questions} />
       ) : (
         <div className="text-center py-8 text-gray-500">
-          No questions found for the selected topics.
+          No questions found for this unit.
         </div>
       )}
     </div>
