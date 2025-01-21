@@ -4,6 +4,7 @@ import { MCQDisplay } from "@/components/MCQDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { TopicsSelection } from "@/components/TopicsSelection";
 import { sqlTopics } from "@/data/sqlTopics";
+import { useToast } from "@/hooks/use-toast";
 
 interface Question {
   id: string;
@@ -29,43 +30,64 @@ export default function GeneratedQuestions() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>(
     location.state?.selectedTopics || []
   );
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchQuestions = async () => {
-      const { data, error } = await supabase
-        .from('generated_questions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('generated_questions')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching questions:', error);
-        return;
-      }
+        if (error) {
+          console.error('Error fetching questions:', error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch questions",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      if (data) {
-        // Map the database fields to our Question interface
-        const mappedQuestions: Question[] = data.map(item => ({
-          id: item.id,
-          topic: item.topic,
-          concept: item.concept,
-          questionKey: item.question_key,
-          questionText: item.question_text,
-          learningOutcome: item.learning_outcome,
-          contentType: item.content_type,
-          questionType: item.question_type,
-          code: item.code || '',
-          codeLanguage: item.code_language || '',
-          options: item.options,
-          correctOption: item.correct_option,
-          explanation: item.explanation,
-          bloomLevel: item.bloom_level
-        }));
-        setQuestions(mappedQuestions);
+        if (data) {
+          // Map the database fields to our Question interface
+          const mappedQuestions: Question[] = data.map(item => ({
+            id: item.id,
+            topic: item.topic,
+            concept: item.concept,
+            questionKey: item.question_key,
+            questionText: item.question_text,
+            learningOutcome: item.learning_outcome,
+            contentType: item.content_type,
+            questionType: item.question_type,
+            code: item.code || '',
+            codeLanguage: item.code_language || '',
+            options: item.options,
+            correctOption: item.correct_option,
+            explanation: item.explanation,
+            bloomLevel: item.bloom_level
+          }));
+
+          // Filter questions based on selected topics
+          const filteredQuestions = mappedQuestions.filter(question =>
+            selectedTopics.includes(question.topic)
+          );
+
+          setQuestions(filteredQuestions);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
       }
     };
 
     fetchQuestions();
-  }, []);
+  }, [selectedTopics]); // Re-fetch when selected topics change
 
   const handleTopicSelect = (topic: string) => {
     const topicIndex = sqlTopics.findIndex((t) => t.Topic === topic);
@@ -89,7 +111,13 @@ export default function GeneratedQuestions() {
         />
       </div>
 
-      <MCQDisplay questions={questions} />
+      {questions.length > 0 ? (
+        <MCQDisplay questions={questions} />
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          No questions found for the selected topics.
+        </div>
+      )}
     </div>
   );
 }
