@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
 import { MCQDisplay } from "@/components/MCQDisplay";
 import { generateQuestions } from "@/utils/openai";
+import { supabase } from "@/integrations/supabase/client";
 
 const sqlTopics = [
   {
@@ -126,6 +127,33 @@ export default function QuestionGeneration() {
     }
   };
 
+  const saveQuestionsToDatabase = async (questions: any[]) => {
+    try {
+      const { error } = await supabase
+        .from('generated_questions')
+        .insert(questions.map(q => ({
+          topic: q.topic,
+          concept: q.concept,
+          question_key: q.questionKey,
+          question_text: q.questionText,
+          learning_outcome: q.learningOutcome,
+          content_type: q.contentType,
+          question_type: q.questionType,
+          code: q.code,
+          code_language: q.codeLanguage,
+          options: q.options,
+          correct_option: q.correctOption,
+          explanation: q.explanation,
+          bloom_level: q.bloomLevel
+        })));
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving questions:', error);
+      throw error;
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (selectedTopics.length === 0) {
       toast({
@@ -139,23 +167,29 @@ export default function QuestionGeneration() {
     try {
       setIsLoading(true);
       const newQuestions = await generateQuestions(values.content);
-      // Append new questions to existing ones
-      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
+      
+      // Save questions to database
+      await saveQuestionsToDatabase(newQuestions);
+
+      // Update state with new questions
+      setGeneratedQuestions(prevQuestions => {
+        const updatedQuestions = [...prevQuestions, ...newQuestions];
+        console.log('Updated questions state:', updatedQuestions);
+        return updatedQuestions;
+      });
+
       toast({
         title: "Questions Generated",
-        description: "Your questions have been generated successfully.",
+        description: "Your questions have been generated and saved successfully.",
       });
     } catch (error) {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate questions. Please check your API credentials and try again.",
+        description: "Failed to generate or save questions. Please try again.",
         variant: "destructive",
       });
     } finally {
-      console.log("##############################################")
-      console.log(generatedQuestions)
-      console.log("##############################################")
       setIsLoading(false);
     }
   };
@@ -278,7 +312,7 @@ export default function QuestionGeneration() {
 
       {generatedQuestions.length > 0 && (
         <div className="mt-12">
-          <MCQDisplay questions={generatedQuestions} />
+          <MCQDisplay key={generatedQuestions.length} questions={generatedQuestions} />
         </div>
       )}
     </div>
