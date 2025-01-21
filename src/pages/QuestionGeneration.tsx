@@ -138,8 +138,9 @@ export default function QuestionGeneration() {
 
     try {
       setIsLoading(true);
-      const questions = await generateQuestions(values.content);
-      setGeneratedQuestions(questions);
+      const newQuestions = await generateQuestions(values.content);
+      // Append new questions to existing ones
+      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
       toast({
         title: "Questions Generated",
         description: "Your questions have been generated successfully.",
