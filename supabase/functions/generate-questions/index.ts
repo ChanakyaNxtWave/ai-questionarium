@@ -32,6 +32,8 @@ Your task is to generate a list of learning outcomes based on the given content.
 
 These learning outcomes will be tagged to the questions to understand the effectiveness of the content through data gathered from the users.
 
+**Note**: The length of the Learning Outcome should be less than 40 characters
+
 ### Task - 2:
 
 **Objective:** Develop a set of multiple-choice questions covering all the learning outcomes listed based on the provided Content.
