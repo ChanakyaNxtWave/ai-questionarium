@@ -26,17 +26,13 @@ interface MCQDisplayProps {
 }
 
 export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => {
-  const [questions, setQuestions] = useState<MCQ[]>(initialQuestions.map(q => ({
-    ...q,
-    id: q.id || q.questionKey // fallback to questionKey if id is not present
-  })));
+  const [questions, setQuestions] = useState<MCQ[]>(initialQuestions);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<MCQ | null>(null);
   const { toast } = useToast();
 
   const handleEdit = (question: MCQ) => {
-    const id = question.id || question.questionKey;
-    if (!id) {
+    if (!question.id) {
       console.error('Question ID is undefined');
       toast({
         title: "Error",
@@ -45,7 +41,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       });
       return;
     }
-    setEditingId(id);
+    setEditingId(question.id);
     setEditedQuestion({ ...question });
   };
 
@@ -55,8 +51,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   };
 
   const handleSaveEdit = async (question: MCQ) => {
-    const id = question.id || question.questionKey;
-    if (!id || !editedQuestion) {
+    if (!question.id || !editedQuestion) {
       console.error('Question ID or edited question is undefined');
       toast({
         title: "Error",
@@ -67,7 +62,23 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     }
 
     try {
-      const { error } = await supabase
+      // First, try to fetch the question to get its UUID
+      const { data: questionData, error: fetchError } = await supabase
+        .from('generated_questions')
+        .select('id')
+        .eq('question_key', question.questionKey)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching question:', fetchError);
+        throw fetchError;
+      }
+
+      if (!questionData?.id) {
+        throw new Error('Question not found in database');
+      }
+
+      const { error: updateError } = await supabase
         .from('generated_questions')
         .update({
           question_text: editedQuestion.questionText,
@@ -75,12 +86,12 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
           options: editedQuestion.options,
           correct_option: editedQuestion.correctOption,
         })
-        .eq('id', id);
+        .eq('id', questionData.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       setQuestions(questions.map(q => 
-        q.id === id ? { ...q, ...editedQuestion } : q
+        q.id === question.id ? { ...q, ...editedQuestion } : q
       ));
       
       toast({
@@ -101,8 +112,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   };
 
   const handleDelete = async (question: MCQ) => {
-    const id = question.id || question.questionKey;
-    if (!id) {
+    if (!question.id) {
       console.error('Question ID is undefined');
       toast({
         title: "Error",
@@ -113,14 +123,30 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     }
 
     try {
-      const { error } = await supabase
+      // First, try to fetch the question to get its UUID
+      const { data: questionData, error: fetchError } = await supabase
+        .from('generated_questions')
+        .select('id')
+        .eq('question_key', question.questionKey)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching question:', fetchError);
+        throw fetchError;
+      }
+
+      if (!questionData?.id) {
+        throw new Error('Question not found in database');
+      }
+
+      const { error: deleteError } = await supabase
         .from('generated_questions')
         .delete()
-        .eq('id', id);
+        .eq('id', questionData.id);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
-      setQuestions(questions.filter(q => q.id !== id));
+      setQuestions(questions.filter(q => q.id !== question.id));
       
       toast({
         title: "Success",
