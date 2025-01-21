@@ -32,8 +32,12 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   const { toast } = useToast();
 
   const handleEdit = (question: MCQ) => {
+    if (!question.id) {
+      console.error('Question ID is undefined');
+      return;
+    }
     setEditingId(question.id);
-    setEditedQuestion(question);
+    setEditedQuestion({ ...question });
   };
 
   const handleCancelEdit = () => {
@@ -42,14 +46,19 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   };
 
   const handleSaveEdit = async (question: MCQ) => {
+    if (!question.id || !editedQuestion) {
+      console.error('Question ID or edited question is undefined');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('generated_questions')
         .update({
-          question_text: editedQuestion?.questionText,
-          explanation: editedQuestion?.explanation,
-          options: editedQuestion?.options,
-          correct_option: editedQuestion?.correctOption,
+          question_text: editedQuestion.questionText,
+          explanation: editedQuestion.explanation,
+          options: editedQuestion.options,
+          correct_option: editedQuestion.correctOption,
         })
         .eq('id', question.id);
 
@@ -77,6 +86,11 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   };
 
   const handleDelete = async (id: string) => {
+    if (!id) {
+      console.error('Question ID is undefined');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('generated_questions')
@@ -106,7 +120,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       <h2 className="text-2xl font-semibold mb-6">Generated Questions</h2>
       {questions.map((question, index) => (
         <div
-          key={question.questionKey}
+          key={question.id}
           className="p-6 border rounded-lg space-y-4 bg-white shadow-sm"
         >
           <div className="flex justify-between items-start">
