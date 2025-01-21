@@ -153,6 +153,9 @@ export default function QuestionGeneration() {
         variant: "destructive",
       });
     } finally {
+      console.log("##############################################")
+      console.log(generatedQuestions)
+      console.log("##############################################")
       setIsLoading(false);
     }
   };
