@@ -128,21 +128,17 @@ CONCEPT: LIKE Operator
 QUESTION_KEY: Q1SOP
 BASE_QUESTION_KEYS: NA
 QUESTION_TEXT: Identify the error in the following SQL query that is intended to find records where the 'name' column starts with "Alph".
-
-\`\`\`sql
-SELECT
-name
-FROM
-customers
-WHERE
-name LIKE 'Alph_';
-\`\`\`
-
 LEARNING_OUTCOME: understand_string_starts_with_pattern
 CONTENT_TYPE: MARKDOWN
 QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: NA
-CODE_LANGUAGE: NA
+CODE: 
+SELECT
+  name
+FROM
+  customers
+WHERE
+  name LIKE 'Alph_';
+CODE_LANGUAGE: SQL
 OPTION_1: The pattern should be 'Alph%'
 OPTION_2: The pattern should be '%Alph'
 OPTION_3: The pattern should be '%Alph%'
