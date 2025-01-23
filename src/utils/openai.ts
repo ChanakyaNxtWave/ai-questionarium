@@ -14,14 +14,15 @@ interface OpenAIResponse {
   correctOption: string;
   explanation: string;
   bloomLevel: string;
+  unitTitle: string;
 }
 
-export const generateQuestions = async (content: string): Promise<OpenAIResponse[]> => {
+export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
   try {
     console.log('Sending content to generate questions:', content);
     
     const { data, error } = await supabase.functions.invoke('generate-questions', {
-      body: { content },
+      body: { content, unitTitle },
     });
 
     if (error) {
@@ -33,7 +34,7 @@ export const generateQuestions = async (content: string): Promise<OpenAIResponse
     console.log('Questions from response:', data.questions);
 
     const rawQuestions = data.questions;
-    const questions = parseOpenAIResponse(rawQuestions);
+    const questions = parseOpenAIResponse(rawQuestions, unitTitle);
     
     console.log('Parsed questions:', questions);
     return questions;
@@ -43,7 +44,7 @@ export const generateQuestions = async (content: string): Promise<OpenAIResponse
   }
 };
 
-const parseOpenAIResponse = (response: string): OpenAIResponse[] => {
+const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIResponse[] => {
   console.log('Starting to parse response:', response);
   
   const questions: OpenAIResponse[] = [];
@@ -51,7 +52,7 @@ const parseOpenAIResponse = (response: string): OpenAIResponse[] => {
   
   console.log('Question blocks after splitting:', questionBlocks);
 
-  const pattern = /(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):([\s\S]*?)(?=(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):|$)/g;
+  const pattern = /(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):([\s\S]*?)(?=(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):|$)/g);
 
   for (const block of questionBlocks) {
     try {
@@ -61,7 +62,8 @@ const parseOpenAIResponse = (response: string): OpenAIResponse[] => {
       console.log('Regex matches:', matches);
       
       const question: any = {
-        options: []
+        options: [],
+        unitTitle: unitTitle // Add unit title to each question
       };
 
       for (const match of matches) {
@@ -124,7 +126,8 @@ const parseOpenAIResponse = (response: string): OpenAIResponse[] => {
         question.concept &&
         question.questionKey &&
         question.questionText &&
-        question.options.length > 0
+        question.options.length > 0 &&
+        question.unitTitle
       ) {
         questions.push(question as OpenAIResponse);
         console.log('Added valid question to results');

@@ -3,6 +3,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 interface RequestBody {
   content: string;
+  unitTitle: string;
 }
 
 const corsHeaders = {
@@ -17,8 +18,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { content } = await req.json() as RequestBody;
+    const { content, unitTitle } = await req.json() as RequestBody;
     console.log('Received content:', content);
+    console.log('Received unit title:', unitTitle);
 
     const prompt = `I want you to act as a technical instructional designer with 10 years of experience in technical curriculum design and development.
 
@@ -96,6 +98,7 @@ OPTION_4:<Option Text without enclosing in quotes unless required/Code in Backti
 CORRECT_OPTION: <OPTION_1/OPTION_2/OPTION_3/OPTION_4>
 EXPLANATION: <explanation. Use Text. Don't use Markdown until and unless the explanation requires markdown syntax>
 BLOOM_LEVEL:
+UNIT_TITLE: ${unitTitle}
 -END-
 
 **Example 1:**
