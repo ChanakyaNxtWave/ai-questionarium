@@ -52,7 +52,17 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
   
   console.log('Question blocks after splitting:', questionBlocks);
 
-  const pattern = /(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):([\s\S]*?)(?=(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):|$)/g);
+  // Split the pattern into parts for better readability
+  const fields = [
+    'TOPIC', 'CONCEPT', 'NEW_CONCEPTS', 'QUESTION_ID', 'QUESTION_KEY',
+    'BASE_QUESTION_KEYS', 'QUESTION_TEXT', 'QUESTION_TYPE', 'LEARNING_OUTCOME',
+    'CODE', 'CONTENT_TYPE', 'CODE_LANGUAGE', 'CORRECT_OPTION', 'BLOOM_LEVEL',
+    'EXPLANATION', 'TAG_NAMES', 'OPTION_\\d+', 'OPTION_\\d+_ID', 'INPUT',
+    'OUTPUT', 'INPUT_\\d+', 'INPUT_\\d+_ID', 'OUTPUT_\\d+', 'OPT\\d+_ID',
+    'OPT_\\d+_DSPLY_ORDER', 'OPT_\\d+_CRT_ORDER'
+  ].join('|');
+
+  const pattern = new RegExp(`(${fields}):[\\s\\S]*?(?=(${fields}:|$))`, 'g');
 
   for (const block of questionBlocks) {
     try {
