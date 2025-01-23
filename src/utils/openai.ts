@@ -52,7 +52,29 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
   
   console.log('Question blocks after splitting:', questionBlocks);
 
-  const pattern = /(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):([\s\S]*?)(?=(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):|$)/g);
+  // Define the fields we want to match
+  const fields = [
+    'TOPIC', 'CONCEPT', 'NEW_CONCEPTS', 'QUESTION_ID', 'QUESTION_KEY',
+    'BASE_QUESTION_KEYS', 'QUESTION_TEXT', 'QUESTION_TYPE', 'LEARNING_OUTCOME',
+    'CODE', 'CONTENT_TYPE', 'CODE_LANGUAGE', 'CORRECT_OPTION', 'BLOOM_LEVEL',
+    'EXPLANATION', 'TAG_NAMES'
+  ];
+
+  // Add dynamic fields for options and other patterns
+  const dynamicFields = [
+    'OPTION_\\d+', 'OPTION_\\d+_ID', 'INPUT', 'OUTPUT', 'INPUT_\\d+',
+    'INPUT_\\d+_ID', 'OUTPUT_\\d+', 'OPT\\d+_ID', 'OPT_\\d+_DSPLY_ORDER',
+    'OPT_\\d+_CRT_ORDER'
+  ];
+
+  // Combine all fields
+  const allFields = [...fields, ...dynamicFields].join('|');
+
+  // Create the pattern string
+  const patternString = `(${allFields}):[\\s\\S]*?(?=(${allFields}):|$)`;
+
+  // Create the RegExp object
+  const pattern = new RegExp(patternString, 'g');
 
   for (const block of questionBlocks) {
     try {
