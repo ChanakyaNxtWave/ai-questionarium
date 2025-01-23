@@ -27,7 +27,6 @@ export type Database = {
           question_text: string
           question_type: string
           topic: string
-          unit_title: string
           updated_at: string
         }
         Insert: {
@@ -47,7 +46,6 @@ export type Database = {
           question_text: string
           question_type: string
           topic: string
-          unit_title: string
           updated_at?: string
         }
         Update: {
@@ -67,7 +65,6 @@ export type Database = {
           question_text?: string
           question_type?: string
           topic?: string
-          unit_title?: string
           updated_at?: string
         }
         Relationships: []

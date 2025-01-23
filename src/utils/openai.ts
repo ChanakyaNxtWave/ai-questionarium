@@ -14,15 +14,14 @@ interface OpenAIResponse {
   correctOption: string;
   explanation: string;
   bloomLevel: string;
-  unitTitle: string;
 }
 
-export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
+export const generateQuestions = async (content: string): Promise<OpenAIResponse[]> => {
   try {
     console.log('Sending content to generate questions:', content);
     
     const { data, error } = await supabase.functions.invoke('generate-questions', {
-      body: { content, unitTitle },
+      body: { content },
     });
 
     if (error) {
@@ -34,7 +33,7 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
     console.log('Questions from response:', data.questions);
 
     const rawQuestions = data.questions;
-    const questions = parseOpenAIResponse(rawQuestions, unitTitle);
+    const questions = parseOpenAIResponse(rawQuestions);
     
     console.log('Parsed questions:', questions);
     return questions;
@@ -44,7 +43,7 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
   }
 };
 
-const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIResponse[] => {
+const parseOpenAIResponse = (response: string): OpenAIResponse[] => {
   console.log('Starting to parse response:', response);
   
   const questions: OpenAIResponse[] = [];
@@ -52,21 +51,7 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
   
   console.log('Question blocks after splitting:', questionBlocks);
 
-  const fields = [
-    'TOPIC', 'CONCEPT', 'NEW_CONCEPTS', 'QUESTION_ID', 'QUESTION_KEY',
-    'BASE_QUESTION_KEYS', 'QUESTION_TEXT', 'QUESTION_TYPE', 'LEARNING_OUTCOME',
-    'CODE', 'CONTENT_TYPE', 'CODE_LANGUAGE', 'CORRECT_OPTION', 'BLOOM_LEVEL',
-    'EXPLANATION', 'TAG_NAMES'
-  ];
-
-  const dynamicFields = [
-    'OPTION_\\d+', 'OPTION_\\d+_ID', 'INPUT', 'OUTPUT', 'INPUT_\\d+',
-    'INPUT_\\d+_ID', 'OUTPUT_\\d+', 'OPT\\d+_ID', 'OPT_\\d+_DSPLY_ORDER',
-    'OPT_\\d+_CRT_ORDER'
-  ];
-
-  const allFields = [...fields, ...dynamicFields].join('|');
-  const pattern = new RegExp(`(${allFields}):[\\s\\S]*?(?=(${allFields}):|$)`, 'g');
+  const pattern = /(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):([\s\S]*?)(?=(TOPIC|CONCEPT|NEW_CONCEPTS|QUESTION_ID|QUESTION_KEY|BASE_QUESTION_KEYS|QUESTION_TEXT|QUESTION_TYPE|LEARNING_OUTCOME|CODE|CONTENT_TYPE|CODE_LANGUAGE|CORRECT_OPTION|BLOOM_LEVEL|EXPLANATION|TAG_NAMES|OPTION_\d+|OPTION_\d+_ID|INPUT|OUTPUT|INPUT_\d+|INPUT_\d+_ID|OUTPUT_\d+|OPT\d+_ID|OPT_\d+_DSPLY_ORDER|OPT_\d+_CRT_ORDER):|$)/g;
 
   for (const block of questionBlocks) {
     try {
@@ -76,8 +61,7 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
       console.log('Regex matches:', matches);
       
       const question: any = {
-        options: [],
-        unitTitle: unitTitle // Add unit title to each question
+        options: []
       };
 
       for (const match of matches) {
@@ -140,8 +124,7 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
         question.concept &&
         question.questionKey &&
         question.questionText &&
-        question.options.length > 0 &&
-        question.unitTitle
+        question.options.length > 0
       ) {
         questions.push(question as OpenAIResponse);
         console.log('Added valid question to results');

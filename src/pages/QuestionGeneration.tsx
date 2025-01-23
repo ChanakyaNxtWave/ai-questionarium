@@ -138,7 +138,8 @@ export default function QuestionGeneration() {
 
     try {
       setIsLoading(true);
-      const newQuestions = await generateQuestions(values.content, values.unitTitle);
+      const newQuestions = await generateQuestions(values.content);
+      // Append new questions to existing ones
       setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
       toast({
         title: "Questions Generated",
@@ -152,6 +153,9 @@ export default function QuestionGeneration() {
         variant: "destructive",
       });
     } finally {
+      console.log("##############################################")
+      console.log(generatedQuestions)
+      console.log("##############################################")
       setIsLoading(false);
     }
   };
