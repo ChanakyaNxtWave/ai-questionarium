@@ -20,6 +20,7 @@ interface MCQ {
   correctOption: string;
   explanation: string;
   bloomLevel: string;
+  unitTitle: string;
 }
 
 interface MCQDisplayProps {
@@ -27,11 +28,10 @@ interface MCQDisplayProps {
 }
 
 export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => {
-  // Assign UUIDs to questions that don't have them
   const [questions, setQuestions] = useState<MCQ[]>(
     initialQuestions.map(q => ({
       ...q,
-      id: q.id || uuidv4() // Generate UUID if not present
+      id: q.id || uuidv4()
     }))
   );
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -147,6 +147,9 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         >
           <div className="flex justify-between items-start">
             <div className="flex-1">
+              <div className="flex justify-between text-sm text-gray-500 mb-2">
+                <span className="font-medium text-primary">{question.unitTitle}</span>
+              </div>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>{question.topic} - {question.concept}</span>
                 <span>Learning Outcome: {question.learningOutcome}</span>
