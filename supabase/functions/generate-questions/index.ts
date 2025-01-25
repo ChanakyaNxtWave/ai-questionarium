@@ -3,6 +3,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 interface RequestBody {
   content: string;
+  unitTitle?: string;
 }
 
 const corsHeaders = {
@@ -13,12 +14,13 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { content } = await req.json() as RequestBody;
+    const { content, unitTitle } = await req.json() as RequestBody;
     console.log('Received content:', content);
+    console.log('Received unitTitle:', unitTitle);
 
     const prompt = `I want you to act as a technical instructional designer with 10 years of experience in technical curriculum design and development.
 
@@ -88,7 +90,7 @@ LEARNING_OUTCOME: <Pick any of the most suitable learning outcomes from the list
 CONTENT_TYPE:HTML/MARKDOWN
 QUESTION_TYPE:MULTIPLE_CHOICE(If the code is not "NA")/CODE_ANALYSIS_MULTIPLE_CHOICE
 CODE:<NA/Code of the question text. Don't give away the answer or correct option in CODE. The code should be formatted and shouldn't be enclosed in backticks.>
-CODE_LANGUAGE:NA/HTML/CSS/SQL/PYTHON/JS/REACT/SHELL/JSON
+CODE_LANGUAGE:NA/HTML/CSS/SQL/PYTHON/SHELL/JSON
 OPTION_1:<Option Text without enclosing in quotes unless required/Code in Backticks, if required>
 OPTION_2:<Option Text without enclosing in quotes unless required/Code in Backticks, if required>
 OPTION_3:<Option Text without enclosing in quotes unless required/Code in Backticks, if required>
@@ -96,63 +98,9 @@ OPTION_4:<Option Text without enclosing in quotes unless required/Code in Backti
 CORRECT_OPTION: <OPTION_1/OPTION_2/OPTION_3/OPTION_4>
 EXPLANATION: <explanation. Use Text. Don't use Markdown until and unless the explanation requires markdown syntax>
 BLOOM_LEVEL:
--END-
+-END-`;
 
-**Example 1:**
-
-TOPIC: Querying
-CONCEPT: Comparison Operators
-QUESTION_KEY: Q2SQL
-BASE_QUESTION_KEYS: NA
-QUESTION_TEXT: Which SQL operator is used to select rows where a column value is not equal to a specific value?
-LEARNING_OUTCOME: introduction_to_sql_operators
-CONTENT_TYPE: TEXT
-QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: NA
-CODE_LANGUAGE: NA
-OPTION_1: =
-OPTION_2: <>
-OPTION_3: <=
-OPTION_4: >
-CORRECT_OPTION: OPTION_2
-EXPLANATION: The SQL operator '<>' is used to select rows where a column value is not equal to a specific value.
-BLOOM_LEVEL: REMEMBERING
-
-
--END-
-
-**Example 2:**
-
-TOPIC: Querying
-CONCEPT: LIKE Operator
-QUESTION_KEY: Q1SOP
-BASE_QUESTION_KEYS: NA
-QUESTION_TEXT: Identify the error in the following SQL query that is intended to find records where the 'name' column starts with "Alph".
-LEARNING_OUTCOME: understand_string_starts_with_pattern
-CONTENT_TYPE: MARKDOWN
-QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: 
-SELECT
-  name
-FROM
-  customers
-WHERE
-  name LIKE 'Alph_';
-CODE_LANGUAGE: SQL
-OPTION_1: The pattern should be 'Alph%'
-OPTION_2: The pattern should be '%Alph'
-OPTION_3: The pattern should be '%Alph%'
-OPTION_4: There is no error in the query
-CORRECT_OPTION: OPTION_1
-EXPLANATION: The underscore character '_' in the LIKE pattern represents exactly one character, but the requirement is to match names starting with "Alph" followed by any number of characters, which is correctly done using 'Alph%'.
-BLOOM_LEVEL: REMEMBERING
--END-
-
-**Key Points:**
-- Ensure each question ends with -END-
-- Don't give away the answer or correct option in CODE.`;
-
-    const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT');
+    const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, ''); // Remove trailing slash if present
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
 
@@ -232,4 +180,4 @@ BLOOM_LEVEL: REMEMBERING
       }
     );
   }
-})
+});
