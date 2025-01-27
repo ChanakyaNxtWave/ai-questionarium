@@ -208,7 +208,7 @@ export default function QuestionGeneration() {
       return;
     }
     
-    // Navigate to variants page
+    // Navigate to variants page with the unit title from the first selected question
     navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
   };
 
@@ -330,13 +330,19 @@ export default function QuestionGeneration() {
 
       {generatedQuestions.length > 0 && (
         <div className="mt-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">Generated Questions</h2>
-            <Button onClick={handleGenerateVariants}>
-              Generate Classroom Variants
-            </Button>
-          </div>
           <MCQDisplay key={generatedQuestions.length} questions={generatedQuestions} />
+          
+          {/* Show Generate Variants button only if there are selected questions */}
+          {generatedQuestions.some(q => q.isSelected) && (
+            <div className="mt-8 flex justify-center">
+              <Button 
+                onClick={handleGenerateVariants}
+                className="w-full md:w-auto"
+              >
+                Generate Classroom Variants
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
