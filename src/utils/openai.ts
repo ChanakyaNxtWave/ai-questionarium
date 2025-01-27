@@ -20,8 +20,6 @@ interface OpenAIResponse {
 
 export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
   try {
-    console.log('Sending content to generate questions:', content);
-    console.log('Unit Title:', unitTitle);
     
     const { data, error } = await supabase.functions.invoke('generate-questions', {
       body: { content, unitTitle },
@@ -32,13 +30,9 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
       throw error;
     }
 
-    console.log('Raw response from OpenAI:', data);
-    console.log('Questions from response:', data.questions);
-
     const rawQuestions = data.questions;
     const questions = parseOpenAIResponse(rawQuestions, unitTitle);
     
-    console.log('Parsed questions:', questions);
     return questions;
   } catch (error) {
     console.error('Error generating questions:', error);
@@ -47,7 +41,6 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
 };
 
 const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIResponse[] => {
-  console.log('Starting to parse response:', response);
   
   const questions: OpenAIResponse[] = [];
   if (!response) {
@@ -56,7 +49,6 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
   }
 
   const questionBlocks = response.split('-END-').filter(block => block && block.trim());
-  console.log('Question blocks after splitting:', questionBlocks);
 
   const fields = [
     'TOPIC', 'CONCEPT', 'NEW_CONCEPTS', 'QUESTION_ID', 'QUESTION_KEY',
@@ -71,10 +63,8 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
 
   for (const block of questionBlocks) {
     try {
-      console.log('Processing block:', block);
       
       const matches = Array.from(block.matchAll(pattern));
-      console.log('Regex matches:', matches);
       
       const question: any = {
         options: [],
@@ -137,13 +127,10 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
           default:
             if (key.startsWith('OPTION_') && !key.endsWith('_ID')) {
               question.options.push(value);
-              console.log('Added option:', value);
             }
             break;
         }
       }
-
-      console.log('Constructed question object:', question);
 
       // Only add questions that have all required fields
       if (
@@ -155,7 +142,6 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
         question.unitTitle
       ) {
         questions.push(question as OpenAIResponse);
-        console.log('Added valid question to results');
       } else {
         console.log('Skipping invalid question - missing required fields:', {
           hasTopic: !!question.topic,
@@ -170,7 +156,5 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
       console.error('Error parsing question block:', error);
     }
   }
-
-  console.log('Final parsed questions:', questions);
   return questions;
 };
