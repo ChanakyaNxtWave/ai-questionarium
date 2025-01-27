@@ -174,7 +174,9 @@ export default function QuestionGeneration() {
         }
       }
 
+      // Append new questions to existing ones instead of replacing them
       setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
+      
       toast({
         title: "Success",
         description: "Questions have been generated and stored successfully.",
