@@ -115,6 +115,20 @@ export default function QuestionGeneration() {
     setSelectedTopics(topicsToSelect);
   };
 
+  const handleGenerateVariants = () => {
+    const selectedQuestions = generatedQuestions.filter(q => q.isSelected);
+    if (selectedQuestions.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one question to generate variants",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -195,21 +209,6 @@ export default function QuestionGeneration() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleGenerateVariants = () => {
-    const selectedQuestions = generatedQuestions.filter(q => q.isSelected);
-    if (selectedQuestions.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please select at least one question to generate variants",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Navigate to variants page with the unit title from the first selected question
-    navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
   };
 
   // Only show SQL topics for the SQL route
@@ -330,9 +329,8 @@ export default function QuestionGeneration() {
 
       {generatedQuestions.length > 0 && (
         <div className="mt-12">
-          <MCQDisplay key={generatedQuestions.length} questions={generatedQuestions} />
+          <MCQDisplay questions={generatedQuestions} />
           
-          {/* Show Generate Variants button only if there are selected questions */}
           {generatedQuestions.some(q => q.isSelected) && (
             <div className="mt-8 flex justify-center">
               <Button 
