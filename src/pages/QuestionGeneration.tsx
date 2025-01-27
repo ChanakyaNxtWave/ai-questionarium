@@ -26,7 +26,6 @@ import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
 import { MCQDisplay } from "@/components/MCQDisplay";
 import { generateQuestions } from "@/utils/openai";
-import { supabase } from "@/integrations/supabase/client";
 
 const sqlTopics = [
   {
@@ -127,19 +126,6 @@ export default function QuestionGeneration() {
     }
   };
 
-  const saveQuestionToDatabase = async (question: any, unitTitle: string) => {
-    const { error } = await supabase.from('generated_questions').insert({
-      ...question,
-      unit_title: unitTitle,
-      question_category: 'BASE_QUESTION'
-    });
-
-    if (error) {
-      console.error('Error saving question:', error);
-      throw error;
-    }
-  };
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (selectedTopics.length === 0) {
       toast({
@@ -153,22 +139,16 @@ export default function QuestionGeneration() {
     try {
       setIsLoading(true);
       const newQuestions = await generateQuestions(values.content, values.unitTitle);
-      
-      // Save each question to the database
-      await Promise.all(newQuestions.map(question => 
-        saveQuestionToDatabase(question, values.unitTitle)
-      ));
-
       setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
       toast({
         title: "Questions Generated",
-        description: "Your questions have been generated and saved successfully.",
+        description: "Your questions have been generated successfully.",
       });
     } catch (error) {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate or save questions. Please try again.",
+        description: "Failed to generate questions. Please check your API credentials and try again.",
         variant: "destructive",
       });
     } finally {

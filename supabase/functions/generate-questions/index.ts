@@ -102,9 +102,11 @@ BLOOM_LEVEL:
 
 **Important Note**:
 * Each generated Question must end with '-END-', as this will be used as a delimiter to separate the questions.
-* Each question will be associated with the Unit Title: "${unitTitle}"`;
+* Each question will be associated with the Unit Title: "${unitTitle}"
 
-    const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, '');
+`;
+
+    const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, ''); // Remove trailing slash if present
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
 
@@ -114,6 +116,7 @@ BLOOM_LEVEL:
     }
 
     console.log('Making request to Azure OpenAI API...');
+    console.log('Using deployment:', deployment);
     
     const response = await fetch(
       `${azureEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`,
@@ -161,8 +164,8 @@ BLOOM_LEVEL:
       JSON.stringify({ questions: rawQuestions }),
       { 
         headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
         } 
       }
     );
@@ -177,8 +180,8 @@ BLOOM_LEVEL:
       { 
         status: 500,
         headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
         } 
       }
     );
