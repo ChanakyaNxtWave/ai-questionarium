@@ -48,8 +48,12 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
   console.log('Starting to parse response:', response);
   
   const questions: OpenAIResponse[] = [];
-  const questionBlocks = response.split('-END-').filter(block => block.trim());
-  
+  if (!response) {
+    console.error('Empty response received');
+    return questions;
+  }
+
+  const questionBlocks = response.split('-END-').filter(block => block && block.trim());
   console.log('Question blocks after splitting:', questionBlocks);
 
   const fields = [
@@ -76,52 +80,62 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
       };
 
       for (const match of matches) {
-        const [, key, value] = match;
-        const trimmedValue = value.trim();
+        if (!match || match.length < 2) {
+          console.log('Invalid match found, skipping:', match);
+          continue;
+        }
+
+        const key = match[1]?.trim();
+        const value = match[0]?.substring(match[1].length + 1)?.trim();
         
-        console.log('Processing match - Key:', key, 'Value:', trimmedValue);
+        if (!key || !value) {
+          console.log('Missing key or value, skipping match');
+          continue;
+        }
+        
+        console.log('Processing match - Key:', key, 'Value:', value);
 
         switch (key) {
           case 'TOPIC':
-            question.topic = trimmedValue;
+            question.topic = value;
             break;
           case 'CONCEPT':
-            question.concept = trimmedValue;
+            question.concept = value;
             break;
           case 'QUESTION_KEY':
-            question.questionKey = trimmedValue;
+            question.questionKey = value;
             break;
           case 'QUESTION_TEXT':
-            question.questionText = trimmedValue;
+            question.questionText = value;
             break;
           case 'LEARNING_OUTCOME':
-            question.learningOutcome = trimmedValue;
+            question.learningOutcome = value;
             break;
           case 'CONTENT_TYPE':
-            question.contentType = trimmedValue;
+            question.contentType = value;
             break;
           case 'QUESTION_TYPE':
-            question.questionType = trimmedValue;
+            question.questionType = value;
             break;
           case 'CODE':
-            question.code = trimmedValue === 'NA' ? 'NA' : trimmedValue;
+            question.code = value === 'NA' ? 'NA' : value;
             break;
           case 'CODE_LANGUAGE':
-            question.codeLanguage = trimmedValue;
+            question.codeLanguage = value;
             break;
           case 'CORRECT_OPTION':
-            question.correctOption = trimmedValue;
+            question.correctOption = value;
             break;
           case 'EXPLANATION':
-            question.explanation = trimmedValue;
+            question.explanation = value;
             break;
           case 'BLOOM_LEVEL':
-            question.bloomLevel = trimmedValue;
+            question.bloomLevel = value;
             break;
           default:
             if (key.startsWith('OPTION_') && !key.endsWith('_ID')) {
-              question.options.push(trimmedValue);
-              console.log('Added option:', trimmedValue);
+              question.options.push(value);
+              console.log('Added option:', value);
             }
             break;
         }
@@ -141,7 +155,14 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
         questions.push(question as OpenAIResponse);
         console.log('Added valid question to results');
       } else {
-        console.log('Skipping invalid question - missing required fields');
+        console.log('Skipping invalid question - missing required fields:', {
+          hasTopic: !!question.topic,
+          hasConcept: !!question.concept,
+          hasQuestionKey: !!question.questionKey,
+          hasQuestionText: !!question.questionText,
+          optionsLength: question.options.length,
+          hasUnitTitle: !!question.unitTitle
+        });
       }
     } catch (error) {
       console.error('Error parsing question block:', error);
