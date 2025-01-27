@@ -12,6 +12,8 @@ export const generateQuestions = async (content: string, unitTitle: string) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Response Error:', errorText);
       throw new Error('Failed to generate questions');
     }
 
