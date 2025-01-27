@@ -175,6 +175,7 @@ export default function QuestionGeneration() {
       }
 
       // Append new questions to existing ones instead of replacing them
+      console.log([...generatedQuestions, ...newQuestions])
       setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
       
       toast({
