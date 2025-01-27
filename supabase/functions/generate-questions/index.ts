@@ -3,7 +3,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 interface RequestBody {
   content: string;
-  unitTitle?: string;
+  unitTitle: string;
 }
 
 const corsHeaders = {
@@ -102,6 +102,7 @@ BLOOM_LEVEL:
 
 **Important Note**:
 * Each generated Question must end with '-END-', as this will be used as a delimiter to separate the questions.
+* Each question will be associated with the Unit Title: "${unitTitle}"
 
 `;
 

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 interface OpenAIResponse {
+  id: string;
   topic: string;
   concept: string;
   questionKey: string;
@@ -20,6 +21,7 @@ interface OpenAIResponse {
 export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
   try {
     console.log('Sending content to generate questions:', content);
+    console.log('Unit Title:', unitTitle);
     
     const { data, error } = await supabase.functions.invoke('generate-questions', {
       body: { content, unitTitle },
