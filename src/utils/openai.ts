@@ -1,103 +1,54 @@
-import { supabase } from "@/integrations/supabase/client";
-
-interface OpenAIResponse {
-  id: string;
-  topic: string;
-  concept: string;
-  questionKey: string;
-  questionText: string;
-  learningOutcome: string;
-  contentType: string;
-  questionType: string;
-  code: string;
-  codeLanguage: string;
-  options: string[];
-  correctOption: string;
-  explanation: string;
-  bloomLevel: string;
-  unitTitle: string;
-}
-
-export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
+export const generateQuestions = async (content: string, unitTitle: string) => {
   try {
-    console.log('Sending content to generate questions:', content);
-    console.log('Unit Title:', unitTitle);
-    
-    const { data, error } = await supabase.functions.invoke('generate-questions', {
-      body: { content, unitTitle },
+    const response = await fetch('/functions/v1/generate-questions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content,
+        unitTitle,
+      }),
     });
 
-    if (error) {
-      console.error('Error from Supabase function:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error('Failed to generate questions');
     }
 
-    console.log('Raw response from OpenAI:', data);
-    console.log('Questions from response:', data.questions);
+    const data = await response.json();
+    console.log('Raw response:', data);
 
-    const rawQuestions = data.questions;
-    const questions = parseOpenAIResponse(rawQuestions, unitTitle);
-    
+    if (!data.questions) {
+      throw new Error('No questions received from the API');
+    }
+
+    const questions = parseOpenAIResponse(data.questions);
     console.log('Parsed questions:', questions);
     return questions;
   } catch (error) {
-    console.error('Error generating questions:', error);
+    console.error('Error in generateQuestions:', error);
     throw error;
   }
 };
 
-const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIResponse[] => {
-  console.log('Starting to parse response:', response);
-  
-  const questions: OpenAIResponse[] = [];
-  if (!response) {
-    console.error('Empty response received');
-    return questions;
-  }
-
-  const questionBlocks = response.split('-END-').filter(block => block && block.trim());
-  console.log('Question blocks after splitting:', questionBlocks);
-
-  const fields = [
-    'TOPIC', 'CONCEPT', 'NEW_CONCEPTS', 'QUESTION_ID', 'QUESTION_KEY',
-    'BASE_QUESTION_KEYS', 'QUESTION_TEXT', 'QUESTION_TYPE', 'LEARNING_OUTCOME',
-    'CODE', 'CONTENT_TYPE', 'CODE_LANGUAGE', 'CORRECT_OPTION', 'BLOOM_LEVEL',
-    'EXPLANATION', 'TAG_NAMES', 'OPTION_\\d+', 'OPTION_\\d+_ID', 'INPUT',
-    'OUTPUT', 'INPUT_\\d+', 'INPUT_\\d+_ID', 'OUTPUT_\\d+', 'OPT\\d+_ID',
-    'OPT_\\d+_DSPLY_ORDER', 'OPT_\\d+_CRT_ORDER'
-  ].join('|');
-
-  const pattern = new RegExp(`(${fields}):[\\s\\S]*?(?=(${fields}):|$)`, 'g');
+const parseOpenAIResponse = (response: string) => {
+  const questions = [];
+  const questionBlocks = response.split('-END-').filter(block => block.trim());
 
   for (const block of questionBlocks) {
     try {
-      console.log('Processing block:', block);
-      
-      const matches = Array.from(block.matchAll(pattern));
-      console.log('Regex matches:', matches);
-      
-      const question: any = {
-        options: [],
-        unitTitle: unitTitle // Add unit title to each question
-      };
+      const question: any = {};
+      const lines = block.trim().split('\n');
 
-      for (const match of matches) {
-        if (!match || match.length < 2) {
-          console.log('Invalid match found, skipping:', match);
-          continue;
-        }
+      for (const line of lines) {
+        if (!line.trim()) continue;
 
-        const key = match[1]?.trim();
-        const value = match[0]?.substring(match[1].length + 1)?.trim();
+        const [key, ...valueParts] = line.split(':');
+        if (!key || valueParts.length === 0) continue;
+
+        const value = valueParts.join(':').trim();
         
-        if (!key || !value) {
-          console.log('Missing key or value, skipping match');
-          continue;
-        }
-        
-        console.log('Processing match - Key:', key, 'Value:', value);
-
-        switch (key) {
+        switch (key.trim()) {
           case 'TOPIC':
             question.topic = value;
             break;
@@ -105,72 +56,52 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
             question.concept = value;
             break;
           case 'QUESTION_KEY':
-            question.questionKey = value;
+            question.question_key = value;
             break;
           case 'QUESTION_TEXT':
-            question.questionText = value;
+            question.question_text = value;
             break;
           case 'LEARNING_OUTCOME':
-            question.learningOutcome = value;
+            question.learning_outcome = value;
             break;
           case 'CONTENT_TYPE':
-            question.contentType = value;
+            question.content_type = value;
             break;
           case 'QUESTION_TYPE':
-            question.questionType = value;
+            question.question_type = value;
             break;
           case 'CODE':
-            question.code = value === 'NA' ? 'NA' : value;
+            question.code = value === 'NA' ? null : value;
             break;
           case 'CODE_LANGUAGE':
-            question.codeLanguage = value;
+            question.code_language = value === 'NA' ? null : value;
+            break;
+          case 'OPTION_1':
+          case 'OPTION_2':
+          case 'OPTION_3':
+          case 'OPTION_4':
+            if (!question.options) question.options = [];
+            question.options.push(value);
             break;
           case 'CORRECT_OPTION':
-            question.correctOption = value;
+            question.correct_option = value;
             break;
           case 'EXPLANATION':
             question.explanation = value;
             break;
           case 'BLOOM_LEVEL':
-            question.bloomLevel = value;
-            break;
-          default:
-            if (key.startsWith('OPTION_') && !key.endsWith('_ID')) {
-              question.options.push(value);
-              console.log('Added option:', value);
-            }
+            question.bloom_level = value;
             break;
         }
       }
 
-      console.log('Constructed question object:', question);
-
-      // Only add questions that have all required fields
-      if (
-        question.topic &&
-        question.concept &&
-        question.questionKey &&
-        question.questionText &&
-        question.options.length > 0 &&
-        question.unitTitle
-      ) {
-        questions.push(question as OpenAIResponse);
-        console.log('Added valid question to results');
-      } else {
-        console.log('Skipping invalid question - missing required fields:', {
-          hasTopic: !!question.topic,
-          hasConcept: !!question.concept,
-          hasQuestionKey: !!question.questionKey,
-          hasQuestionText: !!question.questionText,
-          optionsLength: question.options.length,
-          hasUnitTitle: !!question.unitTitle
-        });
+      if (Object.keys(question).length > 0) {
+        questions.push(question);
       }
     } catch (error) {
       console.error('Error parsing question block:', error);
     }
   }
 
-  console.log('Final parsed questions:', questions);
   return questions;
 };
