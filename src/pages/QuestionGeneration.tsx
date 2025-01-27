@@ -331,16 +331,15 @@ export default function QuestionGeneration() {
         <div className="mt-12">
           <MCQDisplay questions={generatedQuestions} />
           
-          {generatedQuestions.some(q => q.isSelected) && (
-            <div className="mt-8 flex justify-center">
-              <Button 
-                onClick={handleGenerateVariants}
-                className="w-full md:w-auto"
-              >
-                Generate Classroom Variants
-              </Button>
-            </div>
-          )}
+          <div className="mt-8 flex justify-center">
+            <Button 
+              onClick={handleGenerateVariants}
+              className="w-full md:w-auto"
+              disabled={!generatedQuestions.some(q => q.isSelected)}
+            >
+              Generate Classroom Variants
+            </Button>
+          </div>
         </div>
       )}
     </div>
