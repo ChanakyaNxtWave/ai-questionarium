@@ -23,6 +23,7 @@ export type Database = {
           is_selected: boolean | null
           learning_outcome: string
           options: string[]
+          question_category: string
           question_key: string
           question_text: string
           question_type: string
@@ -43,6 +44,7 @@ export type Database = {
           is_selected?: boolean | null
           learning_outcome: string
           options: string[]
+          question_category?: string
           question_key: string
           question_text: string
           question_type: string
@@ -63,6 +65,7 @@ export type Database = {
           is_selected?: boolean | null
           learning_outcome?: string
           options?: string[]
+          question_category?: string
           question_key?: string
           question_text?: string
           question_type?: string
