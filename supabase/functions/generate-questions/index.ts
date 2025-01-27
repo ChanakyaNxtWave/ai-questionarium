@@ -98,7 +98,12 @@ OPTION_4:<Option Text without enclosing in quotes unless required/Code in Backti
 CORRECT_OPTION: <OPTION_1/OPTION_2/OPTION_3/OPTION_4>
 EXPLANATION: <explanation. Use Text. Don't use Markdown until and unless the explanation requires markdown syntax>
 BLOOM_LEVEL:
--END-`;
+-END-
+
+**Important Note**:
+* Each generated Question must end with '-END-', as this will be used as a delimiter to separate the questions.
+
+`;
 
     const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, ''); // Remove trailing slash if present
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
