@@ -19,8 +19,6 @@ Deno.serve(async (req) => {
 
   try {
     const { content, unitTitle } = await req.json() as RequestBody;
-    console.log('Received content:', content);
-    console.log('Received unitTitle:', unitTitle);
 
     const prompt = `I want you to act as a technical instructional designer with 10 years of experience in technical curriculum design and development.
 
@@ -114,9 +112,6 @@ BLOOM_LEVEL:
       console.error('Missing Azure OpenAI credentials or deployment name');
       throw new Error('Azure OpenAI configuration incomplete');
     }
-
-    console.log('Making request to Azure OpenAI API...');
-    console.log('Using deployment:', deployment);
     
     const response = await fetch(
       `${azureEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`,
@@ -150,7 +145,6 @@ BLOOM_LEVEL:
     }
 
     const data = await response.json();
-    console.log('Received response from Azure OpenAI');
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       console.error('Invalid response format from Azure OpenAI:', data);
