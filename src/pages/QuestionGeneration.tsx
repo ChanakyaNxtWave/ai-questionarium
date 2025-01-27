@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
 import { MCQDisplay } from "@/components/MCQDisplay";
 import { generateQuestions } from "@/utils/openai";
+import { supabase } from "@/integrations/supabase/client";
 
 const sqlTopics = [
   {
@@ -139,10 +140,43 @@ export default function QuestionGeneration() {
     try {
       setIsLoading(true);
       const newQuestions = await generateQuestions(values.content, values.unitTitle);
+      
+      // Store questions in Supabase
+      for (const question of newQuestions) {
+        const { error } = await supabase
+          .from('generated_questions')
+          .insert({
+            topic: question.topic,
+            concept: question.concept,
+            question_key: question.questionKey,
+            question_text: question.questionText,
+            learning_outcome: question.learningOutcome,
+            content_type: question.contentType,
+            question_type: question.questionType,
+            code: question.code,
+            code_language: question.codeLanguage,
+            options: question.options,
+            correct_option: question.correctOption,
+            explanation: question.explanation,
+            bloom_level: question.bloomLevel,
+            unit_title: values.unitTitle,
+            question_category: 'BASE_QUESTION'
+          });
+
+        if (error) {
+          console.error('Error storing question:', error);
+          toast({
+            title: "Error",
+            description: "Failed to store some questions in the database",
+            variant: "destructive",
+          });
+        }
+      }
+
       setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
       toast({
-        title: "Questions Generated",
-        description: "Your questions have been generated successfully.",
+        title: "Success",
+        description: "Questions have been generated and stored successfully.",
       });
     } catch (error) {
       console.error('Error:', error);
