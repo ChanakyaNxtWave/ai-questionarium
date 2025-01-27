@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Pencil, Trash2, X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ interface MCQ {
   explanation: string;
   bloomLevel: string;
   unitTitle: string;
+  isSelected?: boolean;
 }
 
 interface MCQDisplayProps {
@@ -137,6 +139,35 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     }
   };
 
+  const handleSelect = async (question: MCQ) => {
+    try {
+      const { error: updateError } = await supabase
+        .from('generated_questions')
+        .update({
+          is_selected: !question.isSelected
+        })
+        .eq('question_key', question.questionKey);
+
+      if (updateError) throw updateError;
+
+      setQuestions(questions.map(q => 
+        q.id === question.id ? { ...q, isSelected: !q.isSelected } : q
+      ));
+      
+      toast({
+        title: "Success",
+        description: `Question ${question.isSelected ? 'unselected' : 'selected'} successfully`,
+      });
+    } catch (error) {
+      console.error('Error updating question selection:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update question selection",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-semibold mb-6">Generated Questions</h2>
@@ -147,8 +178,15 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         >
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <div className="flex justify-between text-sm text-gray-500 mb-2">
-                <span className="font-medium text-primary">{question.unitTitle}</span>
+              <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                <div className="flex items-center gap-4">
+                  <Checkbox
+                    id={`select-${question.id}`}
+                    checked={question.isSelected}
+                    onCheckedChange={() => handleSelect(question)}
+                  />
+                  <span className="font-medium text-primary">{question.unitTitle}</span>
+                </div>
               </div>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>{question.topic} - {question.concept}</span>
