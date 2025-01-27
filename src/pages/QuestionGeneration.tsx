@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -174,9 +174,12 @@ export default function QuestionGeneration() {
         }
       }
 
-      // Append new questions to existing ones instead of replacing them
-      console.log([...generatedQuestions, ...newQuestions])
-      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
+      // Update state with new questions
+      setGeneratedQuestions(prevQuestions => {
+        const updatedQuestions = [...prevQuestions, ...newQuestions];
+        console.log('Updated questions:', updatedQuestions); // Debug log
+        return updatedQuestions;
+      });
       
       toast({
         title: "Success",
@@ -312,7 +315,7 @@ export default function QuestionGeneration() {
 
       {generatedQuestions.length > 0 && (
         <div className="mt-12">
-          <MCQDisplay questions={generatedQuestions} />
+          <MCQDisplay key={generatedQuestions.length} questions={generatedQuestions} />
         </div>
       )}
     </div>
