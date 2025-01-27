@@ -197,6 +197,21 @@ export default function QuestionGeneration() {
     }
   };
 
+  const handleGenerateVariants = () => {
+    const selectedQuestions = generatedQuestions.filter(q => q.isSelected);
+    if (selectedQuestions.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one question to generate variants",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Navigate to variants page
+    navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
+  };
+
   // Only show SQL topics for the SQL route
   if (language !== "sql") {
     return (
@@ -315,6 +330,12 @@ export default function QuestionGeneration() {
 
       {generatedQuestions.length > 0 && (
         <div className="mt-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Generated Questions</h2>
+            <Button onClick={handleGenerateVariants}>
+              Generate Classroom Variants
+            </Button>
+          </div>
           <MCQDisplay key={generatedQuestions.length} questions={generatedQuestions} />
         </div>
       )}
