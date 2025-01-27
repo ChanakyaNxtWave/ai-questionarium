@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
 import { MCQDisplay } from "@/components/MCQDisplay";
 import { generateQuestions } from "@/utils/openai";
+import { supabase } from "@/integrations/supabase/client";
 
 const sqlTopics = [
   {
@@ -90,11 +91,40 @@ const formSchema = z.object({
 
 export default function QuestionGeneration() {
   const { language } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [selectedTopics, setSelectedTopics] = React.useState<string[]>([]);
   const [generatedQuestions, setGeneratedQuestions] = React.useState<any[]>([]);
+
+  // Add authentication check
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to generate questions.",
+          variant: "destructive",
+        });
+        navigate("/login");
+      }
+    };
+
+    checkAuth();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate("/login");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -126,6 +156,42 @@ export default function QuestionGeneration() {
     }
   };
 
+  const saveQuestionsToDatabase = async (questions: any[]) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No authenticated session');
+      }
+
+      const { error } = await supabase
+        .from('generated_questions')
+        .insert(questions.map(q => ({
+          topic: q.topic,
+          concept: q.concept,
+          question_key: q.questionKey,
+          question_text: q.questionText,
+          learning_outcome: q.learningOutcome,
+          content_type: q.contentType,
+          question_type: q.questionType,
+          code: q.code,
+          code_language: q.codeLanguage,
+          options: q.options,
+          correct_option: q.correctOption,
+          explanation: q.explanation,
+          bloom_level: q.bloomLevel
+        })));
+
+      if (error) {
+        console.error('Error saving questions:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (selectedTopics.length === 0) {
       toast({
@@ -138,24 +204,43 @@ export default function QuestionGeneration() {
 
     try {
       setIsLoading(true);
+      
+      // Check authentication before proceeding
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to generate questions.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
       const newQuestions = await generateQuestions(values.content);
-      // Append new questions to existing ones
-      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
+      
+      // Save questions to database
+      await saveQuestionsToDatabase(newQuestions);
+
+      // Update state with new questions
+      setGeneratedQuestions(prevQuestions => {
+        const updatedQuestions = [...prevQuestions, ...newQuestions];
+        console.log('Updated questions state:', updatedQuestions);
+        return updatedQuestions;
+      });
+
       toast({
         title: "Questions Generated",
-        description: "Your questions have been generated successfully.",
+        description: "Your questions have been generated and saved successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate questions. Please check your API credentials and try again.",
+        description: error.message || "Failed to generate or save questions. Please try again.",
         variant: "destructive",
       });
     } finally {
-      console.log("##############################################")
-      console.log(generatedQuestions)
-      console.log("##############################################")
       setIsLoading(false);
     }
   };
@@ -278,7 +363,7 @@ export default function QuestionGeneration() {
 
       {generatedQuestions.length > 0 && (
         <div className="mt-12">
-          <MCQDisplay questions={generatedQuestions} />
+          <MCQDisplay key={generatedQuestions.length} questions={generatedQuestions} />
         </div>
       )}
     </div>
