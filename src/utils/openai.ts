@@ -85,8 +85,6 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
           continue;
         }
         
-        console.log('Processing match - Key:', key, 'Value:', value);
-
         switch (key) {
           case 'TOPIC':
             question.topic = value;
