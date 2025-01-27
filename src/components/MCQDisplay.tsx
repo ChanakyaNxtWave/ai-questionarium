@@ -141,23 +141,33 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
 
   const handleSelect = async (question: MCQ) => {
     try {
+      console.log('Updating selection for question:', question.questionKey);
+      console.log('Current selection state:', question.isSelected);
+      
+      const newIsSelected = !question.isSelected;
+      
       const { error: updateError } = await supabase
         .from('generated_questions')
         .update({
-          is_selected: !question.isSelected
+          is_selected: newIsSelected
         })
         .eq('question_key', question.questionKey);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Supabase update error:', updateError);
+        throw updateError;
+      }
 
       setQuestions(questions.map(q => 
-        q.id === question.id ? { ...q, isSelected: !q.isSelected } : q
+        q.id === question.id ? { ...q, isSelected: newIsSelected } : q
       ));
       
       toast({
         title: "Success",
-        description: `Question ${question.isSelected ? 'unselected' : 'selected'} successfully`,
+        description: `Question ${newIsSelected ? 'selected' : 'unselected'} successfully`,
       });
+      
+      console.log('Selection updated successfully');
     } catch (error) {
       console.error('Error updating question selection:', error);
       toast({
