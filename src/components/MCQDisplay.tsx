@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Pencil, Trash2, X, Check } from "lucide-react";
@@ -39,6 +39,14 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<MCQ | null>(null);
   const { toast } = useToast();
+
+  // Update local state when initialQuestions changes
+  useEffect(() => {
+    setQuestions(initialQuestions.map(q => ({
+      ...q,
+      id: q.id || uuidv4()
+    })));
+  }, [initialQuestions]);
 
   const handleEdit = (question: MCQ) => {
     if (!question.id) {
@@ -142,10 +150,22 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   const handleSelect = async (question: MCQ) => {
     try {
       console.log('Updating selection for question:', question.questionKey);
-      console.log('Current selection state:', question.isSelected);
-      
       const newIsSelected = !question.isSelected;
       
+      // Update local state first for immediate UI feedback
+      setQuestions(prevQuestions => 
+        prevQuestions.map(q => 
+          q.id === question.id ? { ...q, isSelected: newIsSelected } : q
+        )
+      );
+
+      // Show toast immediately
+      toast({
+        title: "Success",
+        description: `Question ${newIsSelected ? 'selected' : 'unselected'} successfully`,
+      });
+
+      // Then update in database
       const { error: updateError } = await supabase
         .from('generated_questions')
         .update({
@@ -155,26 +175,23 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
 
       if (updateError) {
         console.error('Supabase update error:', updateError);
+        // Revert local state if database update fails
+        setQuestions(prevQuestions => 
+          prevQuestions.map(q => 
+            q.id === question.id ? { ...q, isSelected: !newIsSelected } : q
+          )
+        );
+        toast({
+          title: "Error",
+          description: "Failed to update question selection",
+          variant: "destructive",
+        });
         throw updateError;
       }
 
-      setQuestions(questions.map(q => 
-        q.id === question.id ? { ...q, isSelected: newIsSelected } : q
-      ));
-      
-      toast({
-        title: "Success",
-        description: `Question ${newIsSelected ? 'selected' : 'unselected'} successfully`,
-      });
-      
       console.log('Selection updated successfully');
     } catch (error) {
       console.error('Error updating question selection:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update question selection",
-        variant: "destructive",
-      });
     }
   };
 
