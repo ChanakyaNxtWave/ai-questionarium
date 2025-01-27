@@ -102,8 +102,7 @@ BLOOM_LEVEL:
 
 **Important Note**:
 * Each generated Question must end with '-END-', as this will be used as a delimiter to separate the questions.
-* Each question will be associated with the Unit Title: "${unitTitle}"
-`;
+* Each question will be associated with the Unit Title: "${unitTitle}"`;
 
     const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, '');
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
