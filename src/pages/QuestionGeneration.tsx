@@ -1,6 +1,6 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,11 +91,40 @@ const formSchema = z.object({
 
 export default function QuestionGeneration() {
   const { language } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [selectedTopics, setSelectedTopics] = React.useState<string[]>([]);
   const [generatedQuestions, setGeneratedQuestions] = React.useState<any[]>([]);
+
+  // Check authentication status on component mount
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to generate questions.",
+          variant: "destructive",
+        });
+        navigate("/auth"); // Redirect to auth page if not authenticated
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate("/auth");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -139,6 +168,19 @@ export default function QuestionGeneration() {
 
     try {
       setIsLoading(true);
+      
+      // Check authentication before proceeding
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to generate questions.",
+          variant: "destructive",
+        });
+        navigate("/auth");
+        return;
+      }
+
       const newQuestions = await generateQuestions(values.content, values.unitTitle);
       
       // Store questions in Supabase
@@ -165,6 +207,15 @@ export default function QuestionGeneration() {
 
         if (error) {
           console.error('Error storing question:', error);
+          if (error.code === '42501') {
+            toast({
+              title: "Authentication Error",
+              description: "Please sign in again to continue.",
+              variant: "destructive",
+            });
+            navigate("/auth");
+            return;
+          }
           toast({
             title: "Error",
             description: "Failed to store some questions in the database",
