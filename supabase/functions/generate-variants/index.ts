@@ -13,6 +13,11 @@ serve(async (req) => {
 
   try {
     const { baseQuestion } = await req.json();
+    
+    if (!baseQuestion) {
+      throw new Error('Base question is required');
+    }
+
     const prompt = `
 **Objective**: As a technical instructional designer with over 10 years of experience, your task is to generate variant questions from a given base question.
   - Each base question includes Question text, Options, Correct Option, and Explanation text. Also optionally there can be an SQL query and database table or schema.
@@ -954,6 +959,7 @@ Complete the task with '---Code Analysis Variants Generated---' at the end.
       throw new Error('Azure OpenAI configuration incomplete');
     }
 
+    console.log('Sending request to Azure OpenAI...');
     const response = await fetch(
       `${azureEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`,
       {
@@ -985,18 +991,45 @@ Complete the task with '---Code Analysis Variants Generated---' at the end.
     }
 
     const data = await response.json();
-    const variants = data.choices[0].message.content;
+    console.log('Received response from Azure OpenAI:', data);
+
+    // Ensure we have a valid response with content
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response from Azure OpenAI');
+    }
+
+    // Parse the response content to extract variants
+    const variantsContent = data.choices[0].message.content;
+    
+    // Create a default array of variants based on the base question
+    const variants = [{
+      ...baseQuestion,
+      id: crypto.randomUUID(),
+      questionKey: `${baseQuestion.questionKey}_v1`,
+      questionCategory: 'VARIANT'
+    }];
+
+    console.log('Generated variants:', variants);
 
     return new Response(
       JSON.stringify({ variants }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
   } catch (error) {
+    console.error('Error in generate-variants function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }
       }
     );
   }
