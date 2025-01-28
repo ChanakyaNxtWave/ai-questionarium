@@ -90,6 +90,12 @@ export default function QuestionGeneration() {
       const newQuestions = await generateQuestions(values.content, values.unitTitle);
       
       for (const question of newQuestions) {
+        // Add validation to ensure correct_option is not null
+        if (!question.correctOption) {
+          console.error('Question missing correct_option:', question);
+          continue; // Skip questions with missing correct_option
+        }
+
         const { error } = await supabase
           .from('generated_questions')
           .insert({
@@ -100,8 +106,8 @@ export default function QuestionGeneration() {
             learning_outcome: question.learningOutcome,
             content_type: question.contentType,
             question_type: question.questionType,
-            code: question.code,
-            code_language: question.codeLanguage,
+            code: question.code || null, // Ensure null is explicitly set if code is falsy
+            code_language: question.codeLanguage || null, // Ensure null is explicitly set if codeLanguage is falsy
             options: question.options,
             correct_option: question.correctOption,
             explanation: question.explanation,
@@ -114,13 +120,15 @@ export default function QuestionGeneration() {
           console.error('Error storing question:', error);
           toast({
             title: "Error",
-            description: "Failed to store some questions in the database",
+            description: `Failed to store question: ${error.message}`,
             variant: "destructive",
           });
         }
       }
 
-      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
+      // Only add successfully stored questions to the state
+      const validQuestions = newQuestions.filter(q => q.correctOption);
+      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...validQuestions]);
       
       toast({
         title: "Success",
