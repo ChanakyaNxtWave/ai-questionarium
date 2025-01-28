@@ -20,7 +20,6 @@ interface OpenAIResponse {
 
 export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
   try {
-    
     const { data, error } = await supabase.functions.invoke('generate-questions', {
       body: { content, unitTitle },
     });
@@ -40,8 +39,60 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
   }
 };
 
+export const generateVariants = async (baseQuestion: OpenAIResponse): Promise<OpenAIResponse[]> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-variants', {
+      body: { baseQuestion },
+    });
+
+    if (error) {
+      console.error('Error from Supabase function:', error);
+      throw error;
+    }
+
+    const rawQuestions = data.questions;
+    const variants = parseOpenAIResponse(rawQuestions, baseQuestion.unitTitle);
+
+    // Store variants in the database
+    for (const variant of variants) {
+      if (!variant.correctOption) {
+        console.error('Variant missing correct_option:', variant);
+        continue;
+      }
+
+      const { error: insertError } = await supabase
+        .from('generated_questions')
+        .insert({
+          topic: variant.topic,
+          concept: variant.concept,
+          question_key: variant.questionKey,
+          question_text: variant.questionText,
+          learning_outcome: variant.learningOutcome,
+          content_type: variant.contentType,
+          question_type: variant.questionType,
+          code: variant.code || null,
+          code_language: variant.codeLanguage || null,
+          options: variant.options,
+          correct_option: variant.correctOption,
+          explanation: variant.explanation,
+          bloom_level: variant.bloomLevel,
+          unit_title: variant.unitTitle,
+          question_category: 'VARIANT'
+        });
+
+      if (insertError) {
+        console.error('Error storing variant:', insertError);
+      }
+    }
+    
+    return variants;
+  } catch (error) {
+    console.error('Error generating variants:', error);
+    throw error;
+  }
+};
+
 const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIResponse[] => {
-  
   const questions: OpenAIResponse[] = [];
   if (!response) {
     console.error('Empty response received');
@@ -63,7 +114,6 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
 
   for (const block of questionBlocks) {
     try {
-      
       const matches = Array.from(block.matchAll(pattern));
       
       const question: any = {
