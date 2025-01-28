@@ -21,7 +21,27 @@ export const VariantsDisplay = () => {
 
         if (error) throw error;
 
-        setVariants(data || []);
+        // Map the Supabase response to match MCQ interface
+        const mappedVariants: MCQ[] = (data || []).map(item => ({
+          id: item.id,
+          topic: item.topic,
+          concept: item.concept,
+          questionKey: item.question_key,
+          questionText: item.question_text,
+          learningOutcome: item.learning_outcome,
+          contentType: item.content_type,
+          questionType: item.question_type,
+          code: item.code || '',
+          codeLanguage: item.code_language || '',
+          options: item.options,
+          correctOption: item.correct_option,
+          explanation: item.explanation,
+          bloomLevel: item.bloom_level,
+          unitTitle: item.unit_title,
+          isSelected: item.is_selected || false
+        }));
+
+        setVariants(mappedVariants);
       } catch (error) {
         console.error('Error fetching variants:', error);
         toast({
