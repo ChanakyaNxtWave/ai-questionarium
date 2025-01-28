@@ -4,12 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import { QuestionCard } from "./QuestionCard";
 import { MCQ } from "@/types/mcq";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface MCQDisplayProps {
   questions: MCQ[];
 }
 
 export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => {
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState<MCQ[]>(
     initialQuestions.map(q => ({
       ...q,
@@ -27,6 +30,22 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       id: q.id || uuidv4()
     })));
   }, [initialQuestions]);
+
+  const handleGenerateVariants = () => {
+    if (selectedQuestionKeys.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one question to generate variants",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const selectedQuestion = questions.find(q => selectedQuestionKeys.includes(q.questionKey));
+    if (selectedQuestion) {
+      navigate(`/generate/sql/${selectedQuestion.unitTitle}`);
+    }
+  };
 
   const handleEdit = (question: MCQ) => {
     if (!question.id) {

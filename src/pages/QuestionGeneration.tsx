@@ -200,19 +200,6 @@ export default function QuestionGeneration() {
       {generatedQuestions.length > 0 && (
         <div className="mt-12">
           <MCQDisplay questions={generatedQuestions} />
-
-          {console.log(generatedQuestions)}
-          {console.log(generatedQuestions.some(q => q.isSelected))}
-          
-          <div className="mt-8 flex justify-center">
-            <Button 
-              onClick={handleGenerateVariants}
-              className="w-full md:w-auto"
-              disabled={!generatedQuestions.some(q => q.isSelected)}
-            >
-              Generate Classroom Variants
-            </Button>
-          </div>
         </div>
       )}
     </div>
