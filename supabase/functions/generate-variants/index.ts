@@ -87,7 +87,7 @@ Ensure to generate the following variants:
             QUESTION_TEXT:
             Considering the given table and the SQL query what will be the result of the given sql query?
 
-            **Table**: `player_match_details`
+            **Table**: \`player_match_details\`
 
             | Name   | Match  | Score | Fours | Sixes | Year |
             |:--------:|:--------:|:-------:|:-------:|:-------:|:------:|
@@ -95,12 +95,12 @@ Ensure to generate the following variants:
             | Joseph | SRH vs CSK | 40   | 2    | 4     | 2012 |
             | Lokesh | DC vs DD  | 30   | 2    | 13    | 2013 |
 
-            ```sql
+            \`\`\`sql
             SELECT
                 AVG(score) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
             LEARNING_OUTCOME: understand_avg_function
             CONTENT_TYPE: MARKDOWN
             QUESTION_TYPE: MULTIPLE_CHOICE
@@ -125,7 +125,7 @@ Ensure to generate the following variants:
             | 90    |
 
             OPTION_4:
-            No such column: `avg_score`
+            No such column: \`avg_score\`
 
             CORRECT_OPTION: OPTION_1
             EXPLANATION:
