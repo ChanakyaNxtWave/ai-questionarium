@@ -28,7 +28,7 @@ serve(async (req) => {
 
 ### Base Question
 
-${baseQuestion}
+\${baseQuestion}
 
 ## Steps for Variant Creation:
 
@@ -87,7 +87,7 @@ Ensure to generate the following variants:
             QUESTION_TEXT:
             Considering the given table and the SQL query what will be the result of the given sql query?
 
-            **Table**: \`player_match_details\`
+            **Table**: player_match_details
 
             | Name   | Match  | Score | Fours | Sixes | Year |
             |:--------:|:--------:|:-------:|:-------:|:-------:|:------:|
@@ -125,7 +125,7 @@ Ensure to generate the following variants:
             | 90    |
 
             OPTION_4:
-            No such column: \`avg_score\`
+            No such column: avg_score
 
             CORRECT_OPTION: OPTION_1
             EXPLANATION:
@@ -160,9 +160,9 @@ Ensure to generate the following variants:
             QUESTION_KEY: VDT12_v1
             BASE_QUESTION_KEYS: VDT12
             QUESTION_TEXT:
-            Considering the given table and the SQL query, the resultant table will have `avg_score` column with value **30** as output.
+            Considering the given table and the SQL query, the resultant table will have \`avg_score\` column with value **30** as output.
 
-            **Table**: `player_match_details`
+            **Table**: \`player_match_details\`
 
             | Name   | Match  | Score | Fours | Sixes | Year |
             |:--------:|:--------:|:-------:|:-------:|:-------:|:------:|
@@ -170,12 +170,12 @@ Ensure to generate the following variants:
             | Joseph | SRH vs CSK | 40   | 2    | 4     | 2012 |
             | Lokesh | DC vs DD  | 30   | 2    | 13    | 2013 |
 
-            ```sql
+            \`\`\`sql
             SELECT
                 AVG(score) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
             LEARNING_OUTCOME: understand_avg_function
             CONTENT_TYPE: MARKDOWN
             QUESTION_TYPE: MULTIPLE_CHOICE
@@ -216,7 +216,7 @@ Ensure to generate the following variants:
             QUESTION_KEY: VDT12_v1
             BASE_QUESTION_KEYS: VDT12
             QUESTION_TEXT:
-            Consider the data in the `temperature` table. Choose the appropriate query to get the expected output.
+            Consider the data in the \`temperature\` table. Choose the appropriate query to get the expected output.
 
             **temperature** table:
 
@@ -241,33 +241,33 @@ Ensure to generate the following variants:
             CODE_LANGUAGE: NA
             OPTION_1:
 
-            ```sql
+            \`\`\`sql
             SELECT
                 city,
                 'The temperature is ' || temp_f || ' degrees.'
             FROM
                 temperature;
-            ```
+            \`\`\`
 
             OPTION_2:
 
-            ```sql
+            \`\`\`sql
             SELECT
                 city,
                 'The temperature is ' || ROUND(temp_f) || ' degrees.'
             FROM
                 temperature;
-            ```
+            \`\`\`
 
             OPTION_3:
 
-            ```sql
+            \`\`\`sql
             SELECT
                 city,
                 'The temperature is ' || CEIL(temp_f) || ' degrees.'
             FROM
                 temperature;
-            ```
+            \`\`\`
 
             OPTION_4: None of the given options
 
@@ -287,7 +287,7 @@ Ensure to generate the following variants:
             QUESTION_TEXT:
             Which of the following is correct regarding the given SQL query?
 
-            ```sql
+            \`\`\`sql
             SELECT
                 *
             FROM
@@ -297,7 +297,7 @@ Ensure to generate the following variants:
                     age < 18
                     OR age > 60
                 )
-            ```
+            \`\`\`
             CONTENT_TYPE:MARKDOWN
             QUESTION_TYPE:MULTIPLE_CHOICE
             LEARNING_OUTCOME:understand_logical_or_operator
@@ -328,15 +328,15 @@ Ensure to generate the following variants:
 
             Which of the following queries fetches data that satisfies any of the given conditions?
 
-            1. `age` is greater than **20**.
-            2. `grade` is **A**.
+            1. \`age\` is greater than **20**.
+            2. \`grade\` is **A**.
             LEARNING_OUTCOME: understand_logical_or_operator
             CONTENT_TYPE: MARKDOWN
             QUESTION_TYPE: MULTIPLE_CHOICE
             CODE: NA
             CODE_LANGUAGE: NA
             OPTION_1:
-            ```sql
+            \`\`\`sql
             SELECT
                 *
             FROM
@@ -345,10 +345,10 @@ Ensure to generate the following variants:
                 age > 20
             AND
                 grade = 'A';
-            ```
+            \`\`\`
             OPTION_2:
 
-            ```sql
+            \`\`\`sql
             SELECT
                 *
             FROM
@@ -357,10 +357,10 @@ Ensure to generate the following variants:
                 age > 20
             OR
                 grade = 'A';
-            ```
+            \`\`\`
             OPTION_3:
 
-            ```sql
+            \`\`\`sql
             SELECT
                 *
             FROM
@@ -369,7 +369,7 @@ Ensure to generate the following variants:
                 age > 20
             AND NOT
                 grade = 'A';
-            ```
+            \`\`\`
             OPTION_4: None of the given options
             CORRECT_OPTION: OPTION_2
             EXPLANATION:
@@ -406,12 +406,12 @@ Ensure to generate the following variants:
             QUESTION_TEXT:
             Considering the given SQL query, the query is not resulting the average of of the scores, what is the error in the given SQL query?
 
-            ```sql
+            \`\`\`sql
             SELECT
                 AVERAGE(score) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
             LEARNING_OUTCOME: understand_avg_function
             CONTENT_TYPE: MARKDOWN
             QUESTION_TYPE: MULTIPLE_CHOICE
@@ -459,14 +459,14 @@ Ensure to generate the following variants:
             QUESTION_KEY: VDT13_v1
             BASE_QUESTION_KEYS: VDT13
             QUESTION_TEXT:
-            In the given SQL query, `AVG` is the not the correct function to get average of of the scores.
+            In the given SQL query, \`AVG\` is the not the correct function to get average of of the scores.
 
-            ```sql
+            \`\`\`sql
             SELECT
                 AVERAGE(score) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
             LEARNING_OUTCOME: understand_avg_function
             CONTENT_TYPE: MARKDOWN
             QUESTION_TYPE: MULTIPLE_CHOICE
@@ -510,14 +510,14 @@ Ensure to generate the following variants:
             QUESTION_KEY: VDT13_v1
             BASE_QUESTION_KEYS: VDT13
             QUESTION_TEXT:
-            In the given SQL query, `AVERAGE` should be changed to `AVG` to result in the average of the scores.
+            In the given SQL query, \`AVERAGE\` should be changed to \`AVG\` to result in the average of the scores.
 
-            ```sql
+            \`\`\`sql
             SELECT
                 AVERAGE(score) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
             LEARNING_OUTCOME: understand_avg_function
             CONTENT_TYPE: MARKDOWN
             QUESTION_TYPE: MULTIPLE_CHOICE
@@ -564,12 +564,12 @@ Ensure to generate the following variants:
             QUESTION_TEXT:
             What is the functionality of the given SQL query?
 
-            ```sql
+            \`\`\`sql
             SELECT
                 AVG(score) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
             LEARNING_OUTCOME: understand_avg_function
             CONTENT_TYPE: MARKDOWN
             QUESTION_TYPE: MULTIPLE_CHOICE
@@ -588,11 +588,6 @@ Ensure to generate the following variants:
             BLOOM_LEVEL: REMEMBERING
 
             -END-
-
-            **More Sample Question Texts**:
-            - Which of the following is correct regarding the given SQL query?
-            - What is the purpose of the given SQL query?
-
 
 ### 9. **Code Analysis Identify Functionality True/Flase**
     - Identify Functionality focuses on the end goal or purpose of the query, what it is meant to achieve or perform.
@@ -624,14 +619,14 @@ Ensure to generate the following variants:
             QUESTION_KEY: VDT13_v1
             BASE_QUESTION_KEYS: VDT13
             QUESTION_TEXT:
-            The given SQL query will result in the average of the scores from the `player_match_details` table.
+            The given SQL query will result in the average of the scores from the \`player_match_details\` table.
 
-            ```sql
+            \`\`\`sql
             SELECT
                 AVG(score) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
             LEARNING_OUTCOME: understand_avg_function
             CONTENT_TYPE: MARKDOWN
             QUESTION_TYPE: MULTIPLE_CHOICE
@@ -679,21 +674,21 @@ Ensure to generate the following variants:
 
             **Query-1**:
 
-            ```sql
+            \`\`\`sql
             SELECT
                 AVG(score) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
 
             **Query-2**:
 
-            ```sql
+            \`\`\`sql
             SELECT
                 (SUM(score) / COUNT(*)) AS avg_score
             FROM
                 player_match_details;
-            ```
+            \`\`\`
 
             LEARNING_OUTCOME: understand_avg_function
             CONTENT_TYPE: MARKDOWN
@@ -719,236 +714,6 @@ Ensure to generate the following variants:
 Require the generator to confirm it created all 10 variants at the end:
 Confirmed: All 11 variants generated.
 ---Code Analysis Variants Generated---
-
-### Question Guidelines:
-
-1. Ensure the learning outcome of the question is not deviated.
-2. Limit yourself to the topics, subtopics, and learning outcomes mentioned in the session details.
-3. Each question should present a single problem and should be clearly understandable.
-4. Avoid tricky or misleading questions.
-5. Ensure grammatical and syntactical agreement in both the question and the options.
-6. All the questions should be answerable from the given session details.
-7. The code required for the question should be present in the question text and do not use 'CODE' key.
-
-
-### True or False Question Guidelines:
-
-1. Ensure the question text is a statement concluded as true or false.
-2. Avoid using phrases like "Select True/False" or "The following statement is true/false:".
-3. Ensure the question text does not contain phrases like "Select True/False" or "The following statement is true/false:".
-
-### Query Guidelines:
-
-1. All the questions must have a query and ensure the query is relevant to the question text.
-2. The query should be scoped to the concepts discussed in the session.
-
-### Options Guidelines:
-
-1. Limit the options to four per question.
-2. Avoid absolutes like 'always', 'never', etc., in the options.
-3. Ensure all options are of similar length.
-4. Avoid terms in the options that are too closely related to the question or that give away the answer.
-5. Phrase all options similarly for consistency.
-
-### Wrong Options Guidelines:
-
-1. Design wrong options to be believable, appealing, and plausible.
-2. Ensure wrong options are closely related to the content, requiring clear understanding for correct answer selection.
-3. The wrong options should represent actual incorrect results.
-
-### Correct Option Guidelines:
-
-1. Randomize the placement of the correct option among the questions to avoid predictable patterns.
-2. The correct option for a question should be the most technically accurate answer, regardless of common practices or standards, unless the question specifically asks for the standard or common practice.
-
-### Explanation Guidelines:
-
-1. Give a strong reasoning for why the option is correct, focusing on the key information that is only mentioned in provided content.
-2. Briefly indicate why other options are incorrect, highlighting the distinctions from the correct answer.
-3. Explanation shouldn't contain the terms "options", "option 2", etc.
-4. The technical terminology should be from the session. Example, if `Separation of concerns` is not in session, then explanation shouldn't contain `Separation of concerns`.
-
-## Output Format
-
-TOPIC:<same topic of the question from which variant is created>
-CONCEPT:<same sub topic of the question from which variant is created>
-QUESTION_KEY:<QUESTION_KEY of the question from which variant is created + "_v<number>">
-BASE_QUESTION_KEYS:<QUESTION_KEY of the question from which variant is created>
-QUESTION_TEXT:<The content of the question and shouldn't contain code>
-CONTENT_TYPE:MARKDOWN
-QUESTION_TYPE:MULTIPLE_CHOICE
-LEARNING_OUTCOME:<Keep this same as the base question>
-CODE: NA
-CODE_LANGUAGE:NA
-OPTION_1:<Option Text without enclosing in quotes unless required/Code in Backticks, if required>
-OPTION_2:<Option Text without enclosing in quotes unless required/Code in Backticks, if required>
-<...other options if required>
-CORRECT_OPTION:<OPTION_1/OPTION_2/OPTION_3/OPTION_4>
-EXPLANATION:<explanation>
-BLOOM_LEVEL:<same bloom level of the question from which variant is created>
--END-
-
-### Example:
-
-#### Base Question:
-
-```
-TOPIC:Intro to Programming with Python
-CONCEPT:Software - Definition of software as a set of instructions
-QUESTION_KEY:Q1A2B
-BASE_QUESTION_KEYS:NA
-QUESTION_TEXT:What is a string?
-CONTENT_TYPE:TEXT
-QUESTION_TYPE: MULTIPLE_CHOICE
-LEARNING_OUTCOME: understanding_string_datatype
-CODE:NA
-CODE_LANGUAGE:NA
-OPTION_1: A stream of characters
-OPTION_2: A stream of numbers
-OPTION_3: A stream of alphabets
-OPTION_4: None of the given options
-CORRECT_OPTION:OPTION_1
-EXPLANATION: A string is a stream of characters enclosed in double or single quotes.
-BLOOM_LEVEL:REMEMBERING
--END-
-```
-
-#### Generated Variants:
-
-**Code Analysis Multiple Choice Output Prediction**
-
-TOPIC:SQL Aggregations
-CONCEPT:SQL Aggregations - Avg function
-QUESTION_KEY: VDT05_v1
-BASE_QUESTION_KEYS: VDT05
-QUESTION_TEXT:
-Considering the given table and the SQL query, what will be the result of execution of the query?
-
-**Table**: `player_match_details`
-
-| Name   | Match  | Score | Fours | Sixes | Year |
-|:--------:|:--------:|:-------:|:-------:|:-------:|:------:|
-| Ram    | RR vs SRH |  20  | 2    | 2     | 2011 |
-| Joseph | SRH vs CSK | 40   | 2    | 4     | 2012 |
-| Lokesh | DC vs DD  | 30   | 2    | 13    | 2013 |
-
-```sql
-SELECT
-    AVG(score) AS avg_score
-FROM
-    player_match_details;
-```
-LEARNING_OUTCOME: understand_avg_function
-CONTENT_TYPE: MARKDOWN
-QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: NA
-CODE_LANGUAGE: NA
-OPTION_1:
-| avg_score   |
-|:--------:|
-| 30    |
-OPTION_2:
-| avg_score   |
-|:--------:|
-| 20    |
-OPTION_3:
-| avg_score   |
-|:--------:|
-| 90    |
-OPTION_4:
-No such column: `avg_score`
-CORRECT_OPTION: OPTION_1
-EXPLANATION:
-BLOOM_LEVEL: REMEMBERING
-
--END-
-
-**Code Analysis Multiple Choice Output Prediction with True/False**
-
-TOPIC:SQL Aggregations
-CONCEPT:SQL Aggregations - Avg function
-QUESTION_KEY: VDT12_v1
-BASE_QUESTION_KEYS: VDT12
-QUESTION_TEXT:
-Considering the given table and the SQL query, the resultant table will have `avg_score` column with value **30** as output.
-
-**Table**: `player_match_details`
-
-| Name   | Match  | Score | Fours | Sixes | Year |
-|:--------:|:--------:|:-------:|:-------:|:-------:|:------:|
-| Ram    | RR vs SRH |  20  | 2    | 2     | 2011 |
-| Joseph | SRH vs CSK | 40   | 2    | 4     | 2012 |
-| Lokesh | DC vs DD  | 30   | 2    | 13    | 2013 |
-
-```sql
-SELECT
-    AVG(score) AS avg_score
-FROM
-    player_match_details;
-```
-LEARNING_OUTCOME: understand_avg_function
-CONTENT_TYPE: MARKDOWN
-QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: NA
-CODE_LANGUAGE: NA
-OPTION_1: True
-OPTION_2: False
-CORRECT_OPTION: OPTION_1
-EXPLANATION:
-BLOOM_LEVEL: REMEMBERING
-
--END-
-
-**Code Analysis Error Identification**
-
-TOPIC:SQL Aggregations
-CONCEPT:SQL Aggregations - Avg function
-QUESTION_KEY: VDT10_v1
-BASE_QUESTION_KEYS: VDT10
-QUESTION_TEXT:
-Considering the given SQL query, the query is not resulting the average of of the scores, what is the error in the given SQL query?
-
-```sql
-SELECT
-    AVERAGE(score) AS avg_score
-FROM
-    player_match_details;
-```
-LEARNING_OUTCOME: understand_avg_function
-CONTENT_TYPE: MARKDOWN
-QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: NA
-CODE_LANGUAGE: NA
-OPTION_1:
-AVERAGE should be changed to AVG
-OPTION_2:
-AVERAGE should be changed to MEAN
-OPTION_3:
-AVERAGE(score) should be changed to AVERAGE[score]
-OPTION_4:
-None of the given options
-CORRECT_OPTION: OPTION_1
-EXPLANATION:
-BLOOM_LEVEL: REMEMBERING
-
--END-
-
-
----
-
-Now, follow the above-mentioned guidelines and create variants for the given base question.
-
-**Key Points:**
-- Do not just rephrase the question in the response, create above variants of the base question.
-- Try to keep the question text as close as possible to the given sample question texts.
-- Generate questions covering all of the given variants and provide the headings of the possible variant types and the variant questions. Do not provide any other help text.
-- Ensure each question ends with -END-
-- Leave CODE, CODE_LANGUAGE fields as NA and always keep code in the question text in Backtics
-- Don't write the whole query in a single line, format the SQL query in multiple lines properly for better readability.
-- Don't give away the answer or correct option in CODE.
-- The QUESTION_TYPE of each variant should be MULTIPLE_CHOICE
-
-Complete the task with '---Code Analysis Variants Generated---' at the end.
     `;
 
     const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, '');
