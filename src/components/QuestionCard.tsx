@@ -15,6 +15,7 @@ interface QuestionCardProps {
   onDelete: (question: MCQ) => void;
   onSelect: (question: MCQ) => void;
   onEditQuestionChange: (field: keyof MCQ, value: any) => void;
+  isSelected: boolean;
 }
 
 export const QuestionCard = ({
@@ -28,6 +29,7 @@ export const QuestionCard = ({
   onDelete,
   onSelect,
   onEditQuestionChange,
+  isSelected,
 }: QuestionCardProps) => {
   return (
     <div className="p-6 border rounded-lg space-y-4 bg-white shadow-sm">
@@ -37,7 +39,7 @@ export const QuestionCard = ({
             <div className="flex items-center gap-4">
               <Checkbox
                 id={`select-${question.id}`}
-                checked={question.isSelected}
+                checked={isSelected}
                 onCheckedChange={() => onSelect(question)}
               />
               <span className="font-medium text-primary">{question.unitTitle}</span>

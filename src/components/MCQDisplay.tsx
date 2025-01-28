@@ -16,6 +16,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       id: q.id || uuidv4()
     }))
   );
+  const [selectedQuestionKeys, setSelectedQuestionKeys] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<MCQ | null>(null);
   const { toast } = useToast();
@@ -111,6 +112,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       if (deleteError) throw deleteError;
 
       setQuestions(questions.filter(q => q.id !== question.id));
+      setSelectedQuestionKeys(prev => prev.filter(key => key !== question.questionKey));
       
       toast({
         title: "Success",
@@ -128,38 +130,37 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
 
   const handleSelect = async (question: MCQ) => {
     try {
-      console.log('Updating selection for question:', question.questionKey);
-      const newIsSelected = !question.isSelected;
+      const isCurrentlySelected = selectedQuestionKeys.includes(question.questionKey);
       
       // Update local state first for immediate UI feedback
-      setQuestions(prevQuestions => 
-        prevQuestions.map(q => 
-          q.id === question.id ? { ...q, isSelected: newIsSelected } : q
-        )
-      );
+      if (isCurrentlySelected) {
+        setSelectedQuestionKeys(prev => prev.filter(key => key !== question.questionKey));
+      } else {
+        setSelectedQuestionKeys(prev => [...prev, question.questionKey]);
+      }
 
       // Show toast immediately
       toast({
         title: "Success",
-        description: `Question ${newIsSelected ? 'selected' : 'unselected'} successfully`,
+        description: `Question ${isCurrentlySelected ? 'unselected' : 'selected'} successfully`,
       });
 
       // Then update in database
       const { error: updateError } = await supabase
         .from('generated_questions')
         .update({
-          is_selected: newIsSelected
+          is_selected: !isCurrentlySelected
         })
         .eq('question_key', question.questionKey);
 
       if (updateError) {
         console.error('Supabase update error:', updateError);
         // Revert local state if database update fails
-        setQuestions(prevQuestions => 
-          prevQuestions.map(q => 
-            q.id === question.id ? { ...q, isSelected: !newIsSelected } : q
-          )
-        );
+        if (isCurrentlySelected) {
+          setSelectedQuestionKeys(prev => [...prev, question.questionKey]);
+        } else {
+          setSelectedQuestionKeys(prev => prev.filter(key => key !== question.questionKey));
+        }
         toast({
           title: "Error",
           description: "Failed to update question selection",
@@ -199,8 +200,19 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
           onDelete={handleDelete}
           onSelect={handleSelect}
           onEditQuestionChange={handleEditQuestionChange}
+          isSelected={selectedQuestionKeys.includes(question.questionKey)}
         />
       ))}
+      
+      <div className="mt-8 flex justify-center">
+        <Button 
+          onClick={handleGenerateVariants}
+          className="w-full md:w-auto"
+          disabled={selectedQuestionKeys.length === 0}
+        >
+          Generate Classroom Variants
+        </Button>
+      </div>
     </div>
   );
 };
