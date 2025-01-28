@@ -43,11 +43,17 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     
     try {
       const selectedQuestions = questions.filter(q => selectedQuestionKeys.includes(q.questionKey));
+      console.log("$$$$$$$$$$$$$$$$$$$$")
+      console.log(selectedQuestions)
+      console.log("$$$$$$$$$$$$$$$$$$$$")
       const { data: variants, error } = await supabase.functions.invoke('generate-variants', {
         body: { baseQuestion: selectedQuestions[0] }
       });
 
       if (error) throw error;
+      console.log("@@@@@@@@@@@@@@@@@@")
+      console.log(variants)
+      console.log("@@@@@@@@@@@@@@@@@@")
 
       // Store variants in the database
       for (const variant of variants) {
