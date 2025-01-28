@@ -3,85 +3,18 @@ import { useForm } from "react-hook-form";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
 import { TopicsSelection } from "@/components/TopicsSelection";
 import { MCQDisplay } from "@/components/MCQDisplay";
+import { ContentInput } from "@/components/ContentInput";
 import { generateQuestions } from "@/utils/openai";
 import { supabase } from "@/integrations/supabase/client";
-
-const sqlTopics = [
-  {
-    "Topic": "Databases",
-    "Concept": ["Database","Database Management Systems","Relational Databases","Non-Relational Databases","Non-Relational & Relational DBMS"]
-  },
-  {
-    "Topic": "SQL Introduction",
-    "Concept": ["Creating Table","Inserting Data","Retrieving Data","WHERE Clause","Updating Data","Deleting Table","Updating Table"]
-  },
-  {
-    "Topic": "Querying",
-    "Concept": ["Comparison Operators","LIKE Operator","AND Operator","OR Operator","NOT Operator","Precedence","Using multiple logical operators","IN","BETWEEN","Ordering results","Distinct results","LIMIT","OFFSET"]
-  },
-  {
-    "Topic": "Aggregations",
-    "Concept": ["Sum","Average","Min","Max","Count","Alias"]
-  },
-  {
-    "Topic": "Group By",
-    "Concept": ["GROUP BY","GROUP BY with multiple columns","GROUP BY with WHERE Clause","GROUP BY with HAVING"]
-  },
-  {
-    "Topic": "Expressions",
-    "Concept": ["Using Expressions in SELECT Clause","Using Expressions in WHERE Clause"]
-  },
-  {
-    "Topic": "SQL Functions",
-    "Concept": ["Date","Cast","Arithmetic Functions"]
-  },
-  {
-    "Topic": "Case Clause",
-    "Concept": ["Case Clause"]
-  },
-  {
-    "Topic": "Set Operations",
-    "Concept": ["Union","Union All","Intersect","Minus"]
-  },
-  {
-    "Topic": "Modeling",
-    "Concept": ["ER Models","Relationships","One-to-One","Many-to-One","Many-to-Many relationships","ER Model to Relational Database","Creating Tables","Primary key","Foreign Key constraint","Through table","Querying on multiple tables"]
-  },
-  {
-    "Topic": "Joins",
-    "Concept": ["Natural Join","Inner Join","Left Join","Right Join","Full Join","Cross Join","Self Join","Joins on Multiple tables","Joins with other clauses"]
-  },
-  {
-    "Topic": "Views",
-    "Concept": ["Creating Views","Deleting Views"]
-  },
-  {
-    "Topic": "Subqueries",
-    "Concept": ["Introduction to Subquery"]
-  }
-];
+import { sqlTopics } from "@/data/sqlTopics";
+import { MCQ } from "@/types/mcq";
 
 const formSchema = z.object({
   unitTitle: z.string().min(1, "Unit title is required"),
@@ -96,7 +29,7 @@ export default function QuestionGeneration() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [selectedTopics, setSelectedTopics] = React.useState<string[]>([]);
-  const [generatedQuestions, setGeneratedQuestions] = React.useState<any[]>([]);
+  const [generatedQuestions, setGeneratedQuestions] = React.useState<MCQ[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -156,7 +89,6 @@ export default function QuestionGeneration() {
       setIsLoading(true);
       const newQuestions = await generateQuestions(values.content, values.unitTitle);
       
-      // Store questions in Supabase
       for (const question of newQuestions) {
         const { error } = await supabase
           .from('generated_questions')
@@ -188,12 +120,7 @@ export default function QuestionGeneration() {
         }
       }
 
-      // Update state with new questions
-      setGeneratedQuestions(prevQuestions => {
-        const updatedQuestions = [...prevQuestions, ...newQuestions];
-        console.log('Updated questions:', updatedQuestions); // Debug log
-        return updatedQuestions;
-      });
+      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
       
       toast({
         title: "Success",
@@ -211,7 +138,6 @@ export default function QuestionGeneration() {
     }
   };
 
-  // Only show SQL topics for the SQL route
   if (language !== "sql") {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -252,66 +178,10 @@ export default function QuestionGeneration() {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="contentType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Content Source</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select content type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="text">Text Input</SelectItem>
-                    <SelectItem value="file">File Upload</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="content"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  {form.watch("contentType") === "text"
-                    ? "Content"
-                    : "Upload File"}
-                </FormLabel>
-                <FormControl>
-                  {form.watch("contentType") === "text" ? (
-                    <Textarea
-                      placeholder="Enter your content here"
-                      className="min-h-[200px]"
-                      {...field}
-                    />
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      <Input
-                        type="file"
-                        accept=".txt,.md,.py,.js,.html,.css,.sql"
-                        onChange={handleFileChange}
-                      />
-                      {selectedFile && (
-                        <p className="text-sm text-muted-foreground">
-                          Selected file: {selectedFile.name}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <ContentInput
+            form={form}
+            selectedFile={selectedFile}
+            onFileChange={handleFileChange}
           />
 
           <Button type="submit" disabled={isLoading} className="w-full">

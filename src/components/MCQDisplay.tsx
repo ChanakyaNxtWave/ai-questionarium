@@ -1,29 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Pencil, Trash2, X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
-
-interface MCQ {
-  id: string;
-  topic: string;
-  concept: string;
-  questionKey: string;
-  questionText: string;
-  learningOutcome: string;
-  contentType: string;
-  questionType: string;
-  code: string;
-  codeLanguage: string;
-  options: string[];
-  correctOption: string;
-  explanation: string;
-  bloomLevel: string;
-  unitTitle: string;
-  isSelected?: boolean;
-}
+import { QuestionCard } from "./QuestionCard";
+import { MCQ } from "@/types/mcq";
 
 interface MCQDisplayProps {
   questions: MCQ[];
@@ -40,7 +20,6 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   const [editedQuestion, setEditedQuestion] = useState<MCQ | null>(null);
   const { toast } = useToast();
 
-  // Update local state when initialQuestions changes
   useEffect(() => {
     setQuestions(initialQuestions.map(q => ({
       ...q,
@@ -195,138 +174,32 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     }
   };
 
+  const handleEditQuestionChange = (field: keyof MCQ, value: any) => {
+    if (editedQuestion) {
+      setEditedQuestion({
+        ...editedQuestion,
+        [field]: value
+      });
+    }
+  };
+
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-semibold mb-6">Generated Questions</h2>
       {questions.map((question, index) => (
-        <div
+        <QuestionCard
           key={question.id}
-          className="p-6 border rounded-lg space-y-4 bg-white shadow-sm"
-        >
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                <div className="flex items-center gap-4">
-                  <Checkbox
-                    id={`select-${question.id}`}
-                    checked={question.isSelected}
-                    onCheckedChange={() => handleSelect(question)}
-                  />
-                  <span className="font-medium text-primary">{question.unitTitle}</span>
-                </div>
-              </div>
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>{question.topic} - {question.concept}</span>
-                <span>Learning Outcome: {question.learningOutcome}</span>
-              </div>
-              
-              <div className="space-y-4 mt-4">
-                {editingId === question.id ? (
-                  <textarea
-                    className="w-full p-2 border rounded"
-                    value={editedQuestion?.questionText}
-                    onChange={(e) => setEditedQuestion({
-                      ...editedQuestion!,
-                      questionText: e.target.value
-                    })}
-                  />
-                ) : (
-                  <p className="font-medium">{index + 1}. {question.questionText}</p>
-                )}
-                
-                {question.code !== "NA" && (
-                  <pre className="p-4 bg-gray-50 rounded-md overflow-x-auto">
-                    <code>{question.code}</code>
-                  </pre>
-                )}
-                
-                <div className="space-y-2">
-                  {question.options.map((option, optIndex) => (
-                    <div
-                      key={optIndex}
-                      className="flex items-start gap-3 p-3 rounded border hover:bg-gray-50"
-                    >
-                      <div className="w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0">
-                        {String.fromCharCode(65 + optIndex)}
-                      </div>
-                      {editingId === question.id ? (
-                        <input
-                          type="text"
-                          className="flex-1 p-1 border rounded"
-                          value={editedQuestion?.options[optIndex]}
-                          onChange={(e) => {
-                            const newOptions = [...editedQuestion!.options];
-                            newOptions[optIndex] = e.target.value;
-                            setEditedQuestion({
-                              ...editedQuestion!,
-                              options: newOptions
-                            });
-                          }}
-                        />
-                      ) : (
-                        <div>{option}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-4 p-4 bg-primary/5 rounded-md">
-                  <p className="font-medium text-primary">Explanation:</p>
-                  {editingId === question.id ? (
-                    <textarea
-                      className="w-full mt-2 p-2 border rounded"
-                      value={editedQuestion?.explanation}
-                      onChange={(e) => setEditedQuestion({
-                        ...editedQuestion!,
-                        explanation: e.target.value
-                      })}
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-600">{question.explanation}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex gap-2 ml-4">
-              {editingId === question.id ? (
-                <>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleSaveEdit(question)}
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleCancelEdit}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleEdit(question)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleDelete(question)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+          question={question}
+          index={index}
+          isEditing={editingId === question.id}
+          editedQuestion={editedQuestion}
+          onEdit={handleEdit}
+          onCancelEdit={handleCancelEdit}
+          onSaveEdit={handleSaveEdit}
+          onDelete={handleDelete}
+          onSelect={handleSelect}
+          onEditQuestionChange={handleEditQuestionChange}
+        />
       ))}
     </div>
   );
