@@ -31,7 +31,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     })));
   }, [initialQuestions]);
 
-  const handleGenerateVariants = () => {
+  const handleGenerateVariants = async () => {
     if (selectedQuestionKeys.length === 0) {
       toast({
         title: "Error",
@@ -41,9 +41,38 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       return;
     }
     
-    const selectedQuestion = questions.find(q => selectedQuestionKeys.includes(q.questionKey));
-    if (selectedQuestion) {
-      navigate(`/generate/sql/${selectedQuestion.unitTitle}`);
+    try {
+      const selectedQuestions = questions.filter(q => selectedQuestionKeys.includes(q.questionKey));
+      const { data: variants, error } = await supabase.functions.invoke('generate-variants', {
+        body: { baseQuestion: selectedQuestions[0] }
+      });
+
+      if (error) throw error;
+
+      // Store variants in the database
+      for (const variant of variants) {
+        const { error: insertError } = await supabase
+          .from('generated_questions')
+          .insert({
+            ...variant,
+            question_category: 'VARIANT',
+            unit_title: selectedQuestions[0].unitTitle
+          });
+
+        if (insertError) {
+          console.error('Error storing variant:', insertError);
+          throw insertError;
+        }
+      }
+
+      navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
+    } catch (error) {
+      console.error('Error generating variants:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate variants. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -151,20 +180,17 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     try {
       const isCurrentlySelected = selectedQuestionKeys.includes(question.questionKey);
       
-      // Update local state first for immediate UI feedback
       if (isCurrentlySelected) {
         setSelectedQuestionKeys(prev => prev.filter(key => key !== question.questionKey));
       } else {
         setSelectedQuestionKeys(prev => [...prev, question.questionKey]);
       }
 
-      // Show toast immediately
       toast({
         title: "Success",
         description: `Question ${isCurrentlySelected ? 'unselected' : 'selected'} successfully`,
       });
 
-      // Then update in database
       const { error: updateError } = await supabase
         .from('generated_questions')
         .update({
@@ -174,7 +200,6 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
 
       if (updateError) {
         console.error('Supabase update error:', updateError);
-        // Revert local state if database update fails
         if (isCurrentlySelected) {
           setSelectedQuestionKeys(prev => [...prev, question.questionKey]);
         } else {
@@ -187,8 +212,6 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         });
         throw updateError;
       }
-
-      console.log('Selection updated successfully');
     } catch (error) {
       console.error('Error updating question selection:', error);
     }
