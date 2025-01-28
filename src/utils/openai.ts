@@ -41,6 +41,8 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
 
 export const generateVariants = async (baseQuestion: OpenAIResponse): Promise<OpenAIResponse[]> => {
   try {
+    console.log("Generating variants for base question:", baseQuestion);
+    
     const { data, error } = await supabase.functions.invoke('generate-variants', {
       body: { baseQuestion },
     });
@@ -50,8 +52,16 @@ export const generateVariants = async (baseQuestion: OpenAIResponse): Promise<Op
       throw error;
     }
 
+    if (!data?.questions) {
+      console.error('No questions data in response:', data);
+      throw new Error('Invalid response format from generate-variants function');
+    }
+
     const rawQuestions = data.questions;
+    console.log("Raw variants response:", rawQuestions);
+    
     const variants = parseOpenAIResponse(rawQuestions, baseQuestion.unitTitle);
+    console.log("Parsed variants:", variants);
 
     // Store variants in the database
     for (const variant of variants) {
@@ -158,7 +168,7 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
             question.questionType = value;
             break;
           case 'CODE':
-            question.code = value === 'NA' ? 'NA' : value;
+            question.code = value === 'NA' ? null : value;
             break;
           case 'CODE_LANGUAGE':
             question.codeLanguage = value;

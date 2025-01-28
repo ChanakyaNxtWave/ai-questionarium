@@ -6,6 +6,7 @@ import { QuestionCard } from "./QuestionCard";
 import { MCQ } from "@/types/mcq";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { generateVariants } from "@/utils/openai";
 
 interface MCQDisplayProps {
   questions: MCQ[];
@@ -43,34 +44,17 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     
     try {
       const selectedQuestions = questions.filter(q => selectedQuestionKeys.includes(q.questionKey));
-      console.log("$$$$$$$$$$$$$$$$$$$$")
-      console.log(selectedQuestions)
-      console.log("$$$$$$$$$$$$$$$$$$$$")
-      const { data: variants, error } = await supabase.functions.invoke('generate-variants', {
-        body: { baseQuestion: selectedQuestions[0] }
-      });
-
-      if (error) throw error;
-      console.log("@@@@@@@@@@@@@@@@@@")
-      console.log(variants)
-      console.log("@@@@@@@@@@@@@@@@@@")
-
-      // Store variants in the database
-      for (const variant of variants) {
-        const { error: insertError } = await supabase
-          .from('generated_questions')
-          .insert({
-            ...variant,
-            question_category: 'VARIANT',
-            unit_title: selectedQuestions[0].unitTitle
-          });
-
-        if (insertError) {
-          console.error('Error storing variant:', insertError);
-          throw insertError;
-        }
+      console.log("Selected questions for variants:", selectedQuestions);
+      
+      // Generate variants for all selected questions
+      const allVariants = [];
+      for (const baseQuestion of selectedQuestions) {
+        const variants = await generateVariants(baseQuestion);
+        allVariants.push(...variants);
       }
 
+      console.log("Generated variants:", allVariants);
+      
       navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
     } catch (error) {
       console.error('Error generating variants:', error);
