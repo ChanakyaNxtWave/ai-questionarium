@@ -52,15 +52,13 @@ export const generateVariants = async (baseQuestion: OpenAIResponse): Promise<Op
       throw error;
     }
 
-    console.log("Raw response from generate-variants function:", data);
-
     if (!data?.questions) {
       console.error('No questions data in response:', data);
       throw new Error('Invalid response format from generate-variants function');
     }
 
     const rawQuestions = data.questions;
-    console.log("Questions content to parse:", rawQuestions);
+    console.log("Raw variants response:", rawQuestions);
     
     const variants = parseOpenAIResponse(rawQuestions, baseQuestion.unitTitle);
     console.log("Parsed variants:", variants);

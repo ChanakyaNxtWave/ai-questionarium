@@ -49,13 +49,11 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       // Generate variants for all selected questions
       const allVariants = [];
       for (const baseQuestion of selectedQuestions) {
-        console.log("Processing base question:", baseQuestion);
         const variants = await generateVariants(baseQuestion);
-        console.log("Generated variants for question:", variants);
         allVariants.push(...variants);
       }
 
-      console.log("All generated variants:", allVariants);
+      console.log("Generated variants:", allVariants);
       
       navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
     } catch (error) {
