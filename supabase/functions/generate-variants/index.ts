@@ -944,6 +944,9 @@ Now, follow the above mentioned guidelines and create variants for the given bas
 Complete the task with '---Code Analysis Variants Generated---' at the end.
     `;
 
+    console.log(prompt)
+    console.log("******************************")
+
     const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, '');
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
