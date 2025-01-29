@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { baseQuestion } = await req.json();
+    console.log("Edge function received base question:", baseQuestion);
     
     if (!baseQuestion) {
       throw new Error('Base question is required');
@@ -782,171 +783,9 @@ CORRECT_OPTION:<OPTION_1/OPTION_2/OPTION_3/OPTION_4>
 EXPLANATION:<explanation>
 BLOOM_LEVEL:<same bloom level of the question from which variant is created>
 -END-
-
-### Example:
-
-#### Base Question:
-
-TOPIC:Intro to Programming with Python
-CONCEPT:Software - Definition of software as a set of instructions
-QUESTION_KEY:Q1A2B
-BASE_QUESTION_KEYS:NA
-QUESTION_TEXT:What is a string?
-CONTENT_TYPE:TEXT
-QUESTION_TYPE: MULTIPLE_CHOICE
-LEARNING_OUTCOME: understanding_string_datatype
-CODE:NA
-CODE_LANGUAGE:NA
-OPTION_1: A stream of characters
-OPTION_2: A stream of numbers
-OPTION_3: A stream of alphabets
-OPTION_4: None of the given options
-CORRECT_OPTION:OPTION_1
-EXPLANATION: A string is a stream of characters enclosed in double or single quotes.
-BLOOM_LEVEL:REMEMBERING
--END-
-
-#### Generated Variants:
-
-**Code Analysis Multiple Choice Output Prediction**
-
-TOPIC:SQL Aggregations
-CONCEPT:SQL Aggregations - Avg function
-QUESTION_KEY: VDT05_v1
-BASE_QUESTION_KEYS: VDT05
-QUESTION_TEXT:
-Considering the given table and the SQL query, what will be the result of execution of the query?
-
-**Table**: \`player_match_details\`
-
-| Name   | Match  | Score | Fours | Sixes | Year |
-|:--------:|:--------:|:-------:|:-------:|:-------:|:------:|
-| Ram    | RR vs SRH |  20  | 2    | 2     | 2011 |
-| Joseph | SRH vs CSK | 40   | 2    | 4     | 2012 |
-| Lokesh | DC vs DD  | 30   | 2    | 13    | 2013 |
-
-\`\`\`sql
-SELECT
-    AVG(score) AS avg_score
-FROM
-    player_match_details;
-\`\`\`
-LEARNING_OUTCOME: understand_avg_function
-CONTENT_TYPE: MARKDOWN
-QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: NA
-CODE_LANGUAGE: NA
-OPTION_1:
-| avg_score   |
-|:--------:|
-| 30    |
-OPTION_2:
-| avg_score   |
-|:--------:|
-| 20    |
-OPTION_3:
-| avg_score   |
-|:--------:|
-| 90    |
-OPTION_4:
-No such column: \`avg_score\`
-CORRECT_OPTION: OPTION_1
-EXPLANATION:
-BLOOM_LEVEL: REMEMBERING
-
--END-
-
-**Code Analysis Multiple Choice Output Prediction with True/False**
-
-TOPIC:SQL Aggregations
-CONCEPT:SQL Aggregations - Avg function
-QUESTION_KEY: VDT12_v1
-BASE_QUESTION_KEYS: VDT12
-QUESTION_TEXT:
-Considering the given table and the SQL query, the resultant table will have \`avg_score\` column with value **30** as output.
-
-**Table**: \`player_match_details\`
-
-| Name   | Match  | Score | Fours | Sixes | Year |
-|:--------:|:--------:|:-------:|:-------:|:-------:|:------:|
-| Ram    | RR vs SRH |  20  | 2    | 2     | 2011 |
-| Joseph | SRH vs CSK | 40   | 2    | 4     | 2012 |
-| Lokesh | DC vs DD  | 30   | 2    | 13    | 2013 |
-
-\`\`\`sql
-SELECT
-    AVG(score) AS avg_score
-FROM
-    player_match_details;
-\`\`\`
-LEARNING_OUTCOME: understand_avg_function
-CONTENT_TYPE: MARKDOWN
-QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: NA
-CODE_LANGUAGE: NA
-OPTION_1: True
-OPTION_2: False
-CORRECT_OPTION: OPTION_1
-EXPLANATION:
-BLOOM_LEVEL: REMEMBERING
-
--END-
-
-**Code Analysis Error Identification**
-
-TOPIC:SQL Aggregations
-CONCEPT:SQL Aggregations - Avg function
-QUESTION_KEY: VDT10_v1
-BASE_QUESTION_KEYS: VDT10
-QUESTION_TEXT:
-Considering the given SQL query, the query is not resulting the average of of the scores, what is the error in the given SQL query?
-
-\`\`\`sql
-SELECT
-    AVERAGE(score) AS avg_score
-FROM
-    player_match_details;
-\`\`\`
-LEARNING_OUTCOME: understand_avg_function
-CONTENT_TYPE: MARKDOWN
-QUESTION_TYPE: MULTIPLE_CHOICE
-CODE: NA
-CODE_LANGUAGE: NA
-OPTION_1:
-AVERAGE should be changed to AVG
-OPTION_2:
-AVERAGE should be changed to MEAN
-OPTION_3:
-AVERAGE(score) should be changed to AVERAGE[score]
-OPTION_4:
-None of the given options
-CORRECT_OPTION: OPTION_1
-EXPLANATION:
-BLOOM_LEVEL: REMEMBERING
-
--END-
-
-
----
-
-Now, follow the above mentioned guidelines and create variants for the given base question.
-
-**Key Points:**
-- Do not just rephrase the question in the response, create above variants of the base question.
-- Try to keep the question text as close as possible to the given sample question texts.
-- Generate questions covering all of the given variants and provide the headings of the possible variant types and the variant questions. Do not provide any other help text.
-- Ensure each question ends with -END-
-- Leave CODE, CODE_LANGUAGE fields as NA and always keep code in backtics
-- Don't write the whole query in a single line, format the SQL query in multiple lines properly for better readability.
-- Don't give away the answer or correct option in CODE.
-- The QUESTION_TYPE of each variant should be MULTIPLE_CHOICE
-
-Complete the task with '---Code Analysis Variants Generated---' at the end.
     `;
 
-    console.log(prompt)
-    console.log("******************************")
-
+    console.log("Sending request to Azure OpenAI with prompt...");
     const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, '');
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
@@ -955,7 +794,6 @@ Complete the task with '---Code Analysis Variants Generated---' at the end.
       throw new Error('Azure OpenAI configuration incomplete');
     }
 
-    console.log('Sending request to Azure OpenAI...');
     const response = await fetch(
       `${azureEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`,
       {
@@ -981,36 +819,26 @@ Complete the task with '---Code Analysis Variants Generated---' at the end.
       }
     );
 
-    console.log(prompt)
-
     if (!response.ok) {
       const errorText = await response.text();
+      console.error("Azure OpenAI API error:", errorText);
       throw new Error(`Azure OpenAI API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Received response from Azure OpenAI:', data);
+    console.log("Received response from Azure OpenAI:", data);
 
     // Ensure we have a valid response with content
     if (!data.choices?.[0]?.message?.content) {
       throw new Error('Invalid response from Azure OpenAI');
     }
 
-    // Parse the response content to extract variants
-    const variantsContent = data.choices[0].message.content;
-    
-    // Create a default array of variants based on the base question
-    const variants = [{
-      ...baseQuestion,
-      id: crypto.randomUUID(),
-      questionKey: `${baseQuestion.questionKey}_v1`,
-      questionCategory: 'VARIANT'
-    }];
-
-    console.log('Generated variants:', variants);
+    // Get the raw response content which contains questions separated by -END-
+    const questionsContent = data.choices[0].message.content;
+    console.log("Raw questions content:", questionsContent);
 
     return new Response(
-      JSON.stringify({ variants }),
+      JSON.stringify({ questions: questionsContent }),
       { 
         headers: { 
           ...corsHeaders, 
