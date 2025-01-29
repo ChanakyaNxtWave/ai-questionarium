@@ -978,6 +978,8 @@ Complete the task with '---Code Analysis Variants Generated---' at the end.
       }
     );
 
+    console.log(prompt)
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Azure OpenAI API error: ${response.status} ${errorText}`);
