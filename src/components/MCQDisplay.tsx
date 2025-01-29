@@ -44,20 +44,22 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
     
     try {
       const selectedQuestions = questions.filter(q => selectedQuestionKeys.includes(q.questionKey));
-      console.log("Selected questions for variants:", selectedQuestions);
+      console.log("Frontend: Selected questions for variants:", selectedQuestions);
       
       // Generate variants for all selected questions
       const allVariants = [];
       for (const baseQuestion of selectedQuestions) {
+        console.log("Frontend: Processing base question:", baseQuestion);
         const variants = await generateVariants(baseQuestion);
+        console.log("Frontend: Generated variants for question:", variants);
         allVariants.push(...variants);
       }
 
-      console.log("Generated variants:", allVariants);
+      console.log("Frontend: All generated variants:", allVariants);
       
       navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
     } catch (error) {
-      console.error('Error generating variants:', error);
+      console.error('Frontend: Error generating variants:', error);
       toast({
         title: "Error",
         description: "Failed to generate variants. Please try again.",
