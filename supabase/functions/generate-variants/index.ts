@@ -15,6 +15,7 @@ serve(async (req) => {
     const { baseQuestion } = await req.json();
     
     if (!baseQuestion) {
+      console.error('[generate-variants] Base question is missing');
       throw new Error('Base question is required');
     }
 
@@ -23,6 +24,7 @@ serve(async (req) => {
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
 
     if (!azureEndpoint || !apiKey || !deployment) {
+      console.error('[generate-variants] Azure OpenAI configuration incomplete');
       throw new Error('Azure OpenAI configuration incomplete');
     }
 
@@ -89,8 +91,10 @@ Important:
     }
 
     const data = await response.json();
+    console.log('[generate-variants] Azure OpenAI API response:', data);
 
     if (!data.choices?.[0]?.message?.content) {
+      console.error('[generate-variants] Invalid response from Azure OpenAI:', data);
       throw new Error('Invalid response from Azure OpenAI');
     }
 
@@ -109,7 +113,10 @@ Important:
   } catch (error) {
     console.error('[generate-variants] Error:', error.message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         status: 500,
         headers: { 
