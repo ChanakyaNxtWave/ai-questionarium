@@ -1,6 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
 import { MCQ } from "@/types/mcq";
 
+export interface OpenAIResponse {
+  topic: string;
+  concept: string;
+  questionKey: string;
+  questionText: string;
+  learningOutcome: string;
+  contentType: string;
+  questionType: string;
+  code?: string | null;
+  codeLanguage?: string | null;
+  options: string[];
+  correctOption: string;
+  explanation: string;
+  bloomLevel: string;
+  unitTitle: string;
+}
+
 export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
   try {
     const { data, error } = await supabase.functions.invoke('generate-questions', {
