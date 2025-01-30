@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { MCQ } from "@/types/mcq";
 
 interface OpenAIResponse {
   id: string;
@@ -39,7 +40,7 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
   }
 };
 
-export const generateVariants = async (baseQuestion: OpenAIResponse): Promise<OpenAIResponse[]> => {
+export const generateVariants = async (baseQuestion: MCQ): Promise<OpenAIResponse[]> => {
   try {
     console.log("Generating variants for base question:", baseQuestion);
     
@@ -52,49 +53,20 @@ export const generateVariants = async (baseQuestion: OpenAIResponse): Promise<Op
       throw error;
     }
 
-    if (!data?.questions) {
-      console.error('No questions data in response:', data);
+    if (!data?.variants) {
+      console.error('No variants data in response:', data);
       throw new Error('Invalid response format from generate-variants function');
     }
 
-    const rawQuestions = data.questions;
-    console.log("Raw variants response:", rawQuestions);
+    console.log("Raw variants response:", data.variants);
     
-    const variants = parseOpenAIResponse(rawQuestions, baseQuestion.unitTitle);
+    // Parse the variants response
+    const variants = data.variants.map((variant: any) => ({
+      ...variant,
+      unitTitle: baseQuestion.unitTitle
+    }));
+
     console.log("Parsed variants:", variants);
-
-    // Store variants in the database
-    for (const variant of variants) {
-      if (!variant.correctOption) {
-        console.error('Variant missing correct_option:', variant);
-        continue;
-      }
-
-      const { error: insertError } = await supabase
-        .from('generated_questions')
-        .insert({
-          topic: variant.topic,
-          concept: variant.concept,
-          question_key: variant.questionKey,
-          question_text: variant.questionText,
-          learning_outcome: variant.learningOutcome,
-          content_type: variant.contentType,
-          question_type: variant.questionType,
-          code: variant.code || null,
-          code_language: variant.codeLanguage || null,
-          options: variant.options,
-          correct_option: variant.correctOption,
-          explanation: variant.explanation,
-          bloom_level: variant.bloomLevel,
-          unit_title: variant.unitTitle,
-          question_category: 'VARIANT'
-        });
-
-      if (insertError) {
-        console.error('Error storing variant:', insertError);
-      }
-    }
-    
     return variants;
   } catch (error) {
     console.error('Error generating variants:', error);

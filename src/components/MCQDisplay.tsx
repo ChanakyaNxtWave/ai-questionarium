@@ -23,6 +23,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   const [selectedQuestionKeys, setSelectedQuestionKeys] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<MCQ | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,27 +43,79 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       return;
     }
     
+    setIsGenerating(true);
+    
     try {
       const selectedQuestions = questions.filter(q => selectedQuestionKeys.includes(q.questionKey));
       console.log("Selected questions for variants:", selectedQuestions);
       
-      // Generate variants for all selected questions
-      const allVariants = [];
+      // Generate variants for each selected question individually
       for (const baseQuestion of selectedQuestions) {
-        const variants = await generateVariants(baseQuestion);
-        allVariants.push(...variants);
+        console.log("Generating variants for question:", baseQuestion);
+        try {
+          const variants = await generateVariants(baseQuestion);
+          console.log("Generated variants for question:", variants);
+          
+          // Store each variant in the database
+          for (const variant of variants) {
+            try {
+              const { error: insertError } = await supabase
+                .from('generated_questions')
+                .insert({
+                  topic: variant.topic,
+                  concept: variant.concept,
+                  question_key: variant.questionKey,
+                  question_text: variant.questionText,
+                  learning_outcome: variant.learningOutcome,
+                  content_type: variant.contentType,
+                  question_type: variant.questionType,
+                  code: variant.code || null,
+                  code_language: variant.codeLanguage || null,
+                  options: variant.options,
+                  correct_option: variant.correctOption,
+                  explanation: variant.explanation,
+                  bloom_level: variant.bloomLevel,
+                  unit_title: baseQuestion.unitTitle,
+                  question_category: 'VARIANT'
+                });
+
+              if (insertError) {
+                console.error('Error storing variant:', insertError);
+                toast({
+                  title: "Error",
+                  description: `Failed to store variant: ${insertError.message}`,
+                  variant: "destructive",
+                });
+              }
+            } catch (error) {
+              console.error('Error storing variant:', error);
+            }
+          }
+        } catch (error) {
+          console.error('Error generating variants for question:', baseQuestion, error);
+          toast({
+            title: "Error",
+            description: `Failed to generate variants for a question: ${error.message}`,
+            variant: "destructive",
+          });
+        }
       }
 
-      console.log("Generated variants:", allVariants);
+      toast({
+        title: "Success",
+        description: "Variants generated and stored successfully",
+      });
       
       navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
     } catch (error) {
-      console.error('Error generating variants:', error);
+      console.error('Error in handleGenerateVariants:', error);
       toast({
         title: "Error",
         description: "Failed to generate variants. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -176,11 +229,6 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         setSelectedQuestionKeys(prev => [...prev, question.questionKey]);
       }
 
-      toast({
-        title: "Success",
-        description: `Question ${isCurrentlySelected ? 'unselected' : 'selected'} successfully`,
-      });
-
       const { error: updateError } = await supabase
         .from('generated_questions')
         .update({
@@ -190,6 +238,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
 
       if (updateError) {
         console.error('Supabase update error:', updateError);
+        // Revert the selection if the update failed
         if (isCurrentlySelected) {
           setSelectedQuestionKeys(prev => [...prev, question.questionKey]);
         } else {
@@ -202,6 +251,11 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         });
         throw updateError;
       }
+
+      toast({
+        title: "Success",
+        description: `Question ${isCurrentlySelected ? 'unselected' : 'selected'} successfully`,
+      });
     } catch (error) {
       console.error('Error updating question selection:', error);
     }
@@ -240,9 +294,9 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         <Button 
           onClick={handleGenerateVariants}
           className="w-full md:w-auto"
-          disabled={selectedQuestionKeys.length === 0}
+          disabled={selectedQuestionKeys.length === 0 || isGenerating}
         >
-          Generate Classroom Variants
+          {isGenerating ? "Generating Variants..." : "Generate Classroom Variants"}
         </Button>
       </div>
     </div>
