@@ -7,34 +7,26 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log("Generate variants function started");
-  
   if (req.method === 'OPTIONS') {
-    console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("Parsing request body");
     const { baseQuestion } = await req.json();
     
     if (!baseQuestion) {
-      console.error('Base question is missing from request');
       throw new Error('Base question is required');
     }
-
-    console.log("Received base question:", baseQuestion);
 
     const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, '');
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
 
     if (!azureEndpoint || !apiKey || !deployment) {
-      console.error('Azure OpenAI configuration incomplete');
       throw new Error('Azure OpenAI configuration incomplete');
     }
 
-    console.log('Sending request to Azure OpenAI...');
+    console.log('[generate-variants] Generating variants for question:', baseQuestion.questionKey);
     
     const prompt = `Generate 3 variant questions for the following base question. Follow this format strictly for each variant:
 
@@ -70,8 +62,8 @@ Important:
       {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'api-key': apiKey,
         },
         body: JSON.stringify({
           messages: [
@@ -81,7 +73,7 @@ Important:
             },
             {
               role: 'user',
-              content: prompt,
+              content: prompt
             },
           ],
           temperature: 0.7,
@@ -92,20 +84,18 @@ Important:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Azure OpenAI API error: ${response.status} ${errorText}`);
+      console.error('[generate-variants] Azure OpenAI API error:', response.status, errorText);
       throw new Error(`Azure OpenAI API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Received response from Azure OpenAI:', data);
 
     if (!data.choices?.[0]?.message?.content) {
-      console.error('Invalid response from Azure OpenAI');
       throw new Error('Invalid response from Azure OpenAI');
     }
 
     const rawResponse = data.choices[0].message.content;
-    console.log('Raw response content:', rawResponse);
+    console.log('[generate-variants] Successfully generated variants for question:', baseQuestion.questionKey);
 
     return new Response(
       JSON.stringify({ rawResponse }),
@@ -117,7 +107,7 @@ Important:
       }
     );
   } catch (error) {
-    console.error('Error in generate-variants function:', error);
+    console.error('[generate-variants] Error:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

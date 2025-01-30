@@ -1,91 +1,62 @@
 import { supabase } from "@/integrations/supabase/client";
 import { MCQ } from "@/types/mcq";
 
-interface OpenAIResponse {
-  id: string;
-  topic: string;
-  concept: string;
-  questionKey: string;
-  questionText: string;
-  learningOutcome: string;
-  contentType: string;
-  questionType: string;
-  code: string;
-  codeLanguage: string;
-  options: string[];
-  correctOption: string;
-  explanation: string;
-  bloomLevel: string;
-  unitTitle: string;
-}
-
 export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
   try {
-    console.log("Generating questions with content:", content, "and unitTitle:", unitTitle);
-    
     const { data, error } = await supabase.functions.invoke('generate-questions', {
       body: { content, unitTitle },
     });
 
     if (error) {
-      console.error('Error from Supabase function:', error);
+      console.error('[generateQuestions] Error from Supabase function:', error);
       throw error;
     }
 
-    console.log("Raw response from generate-questions:", data);
     const rawQuestions = data.questions;
     const questions = parseOpenAIResponse(rawQuestions, unitTitle);
-    console.log("Parsed questions:", questions);
-    
     return questions;
   } catch (error) {
-    console.error('Error generating questions:', error);
+    console.error('[generateQuestions] Error:', error);
     throw error;
   }
 };
 
 export const generateVariants = async (baseQuestion: MCQ): Promise<OpenAIResponse[]> => {
   try {
-    console.log("Generating variants for base question:", baseQuestion);
+    console.log('[generateVariants] Starting variant generation for question:', baseQuestion.questionKey);
     
     const { data, error } = await supabase.functions.invoke('generate-variants', {
       body: { baseQuestion },
     });
 
     if (error) {
-      console.error('Error from Supabase function:', error);
+      console.error('[generateVariants] Error from Supabase function:', error);
       throw error;
     }
 
     if (!data?.rawResponse) {
-      console.error('No raw response in data:', data);
+      console.error('[generateVariants] Invalid response format from generate-variants function');
       throw new Error('Invalid response format from generate-variants function');
     }
-
-    console.log("Raw variants response:", data.rawResponse);
     
-    // Parse the variants response using the existing parseOpenAIResponse function
     const variants = parseOpenAIResponse(data.rawResponse, baseQuestion.unitTitle);
-
-    console.log("Parsed variants:", variants);
+    console.log('[generateVariants] Successfully generated variants for question:', baseQuestion.questionKey);
+    
     return variants;
   } catch (error) {
-    console.error('Error generating variants:', error);
+    console.error('[generateVariants] Error:', error);
     throw error;
   }
 };
 
 const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIResponse[] => {
-  console.log("Parsing OpenAI response:", response);
-  
   const questions: OpenAIResponse[] = [];
   if (!response) {
-    console.error('Empty response received');
+    console.error('[parseOpenAIResponse] Empty response received');
     return questions;
   }
 
   const questionBlocks = response.split('-END-').filter(block => block && block.trim());
-  console.log("Question blocks:", questionBlocks);
 
   const fields = [
     'TOPIC', 'CONCEPT', 'NEW_CONCEPTS', 'QUESTION_ID', 'QUESTION_KEY',
@@ -101,26 +72,18 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
   for (const block of questionBlocks) {
     try {
       const matches = Array.from(block.matchAll(pattern));
-      console.log("Matches for block:", matches);
-      
       const question: any = {
         options: [],
         unitTitle: unitTitle
       };
 
       for (const match of matches) {
-        if (!match || match.length < 2) {
-          console.log('Invalid match found, skipping:', match);
-          continue;
-        }
+        if (!match || match.length < 2) continue;
 
         const key = match[1]?.trim();
         const value = match[0]?.substring(match[1].length + 1)?.trim();
         
-        if (!key || !value) {
-          console.log('Missing key or value, skipping match');
-          continue;
-        }
+        if (!key || !value) continue;
         
         switch (key) {
           case 'TOPIC':
@@ -167,9 +130,6 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
         }
       }
 
-      console.log("Parsed question:", question);
-
-      // Only add questions that have all required fields
       if (
         question.topic &&
         question.concept &&
@@ -180,7 +140,7 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
       ) {
         questions.push(question as OpenAIResponse);
       } else {
-        console.log('Skipping invalid question - missing required fields:', {
+        console.error('[parseOpenAIResponse] Invalid question - missing required fields:', {
           hasTopic: !!question.topic,
           hasConcept: !!question.concept,
           hasQuestionKey: !!question.questionKey,
@@ -190,10 +150,9 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
         });
       }
     } catch (error) {
-      console.error('Error parsing question block:', error);
+      console.error('[parseOpenAIResponse] Error parsing question block:', error);
     }
   }
   
-  console.log("Final parsed questions:", questions);
   return questions;
 };
