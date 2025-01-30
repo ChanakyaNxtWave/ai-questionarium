@@ -41,36 +41,32 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
 
 export const generateVariants = async (baseQuestion: OpenAIResponse): Promise<OpenAIResponse[]> => {
   try {
-    console.log("Frontend: Generating variants for base question:", baseQuestion);
+    console.log("Generating variants for base question:", baseQuestion);
     
     const { data, error } = await supabase.functions.invoke('generate-variants', {
       body: { baseQuestion },
     });
 
     if (error) {
-      console.error('Frontend: Error from Supabase function:', error);
+      console.error('Error from Supabase function:', error);
       throw error;
     }
 
-    console.log("Frontend: Raw response from edge function:", data);
-
     if (!data?.questions) {
-      console.error('Frontend: Invalid response format:', data);
+      console.error('No questions data in response:', data);
       throw new Error('Invalid response format from generate-variants function');
     }
 
     const rawQuestions = data.questions;
-    console.log("Frontend: Raw questions content:", rawQuestions);
+    console.log("Raw variants response:", rawQuestions);
     
     const variants = parseOpenAIResponse(rawQuestions, baseQuestion.unitTitle);
-    console.log("Frontend: Parsed variants:", variants);
+    console.log("Parsed variants:", variants);
 
     // Store variants in the database
     for (const variant of variants) {
-      console.log("Frontend: Storing variant:", variant);
-      
       if (!variant.correctOption) {
-        console.error('Frontend: Variant missing correct_option:', variant);
+        console.error('Variant missing correct_option:', variant);
         continue;
       }
 
@@ -95,13 +91,13 @@ export const generateVariants = async (baseQuestion: OpenAIResponse): Promise<Op
         });
 
       if (insertError) {
-        console.error('Frontend: Error storing variant:', insertError);
+        console.error('Error storing variant:', insertError);
       }
     }
     
     return variants;
   } catch (error) {
-    console.error('Frontend: Error generating variants:', error);
+    console.error('Error generating variants:', error);
     throw error;
   }
 };
