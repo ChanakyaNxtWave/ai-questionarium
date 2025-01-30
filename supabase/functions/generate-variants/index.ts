@@ -7,12 +7,14 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { baseQuestion } = await req.json();
+    console.log('[generate-variants] Received base question:', baseQuestion);
     
     if (!baseQuestion) {
       console.error('[generate-variants] Base question is missing');
@@ -24,12 +26,16 @@ serve(async (req) => {
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
 
     if (!azureEndpoint || !apiKey || !deployment) {
-      console.error('[generate-variants] Azure OpenAI configuration incomplete');
+      console.error('[generate-variants] Missing Azure OpenAI configuration:', {
+        hasEndpoint: !!azureEndpoint,
+        hasApiKey: !!apiKey,
+        hasDeployment: !!deployment
+      });
       throw new Error('Azure OpenAI configuration incomplete');
     }
 
     console.log('[generate-variants] Generating variants for question:', baseQuestion.questionKey);
-    
+
     const prompt = `Generate 3 variant questions for the following base question. Follow this format strictly for each variant:
 
 TOPIC: [topic]
@@ -59,12 +65,14 @@ Important:
 4. Keep the learning outcome consistent
 5. Ensure QUESTION_KEY follows pattern: original_key_v1, original_key_v2, etc.`;
 
+    console.log('[generate-variants] Making request to Azure OpenAI');
+    
     const response = await fetch(
       `${azureEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'api-key': apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -86,7 +94,11 @@ Important:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[generate-variants] Azure OpenAI API error:', response.status, errorText);
+      console.error('[generate-variants] Azure OpenAI API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
       throw new Error(`Azure OpenAI API error: ${response.status} ${errorText}`);
     }
 
@@ -111,11 +123,11 @@ Important:
       }
     );
   } catch (error) {
-    console.error('[generate-variants] Error:', error.message);
+    console.error('[generate-variants] Error:', error.message, '\nStack:', error.stack);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.stack
+        stack: error.stack
       }),
       { 
         status: 500,
