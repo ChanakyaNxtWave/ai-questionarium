@@ -34,6 +34,9 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
   }, [initialQuestions]);
 
   const handleGenerateVariants = async () => {
+    console.log("Starting handleGenerateVariants");
+    console.log("Selected question keys:", selectedQuestionKeys);
+    
     if (selectedQuestionKeys.length === 0) {
       toast({
         title: "Error",
@@ -59,6 +62,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
           // Store each variant in the database
           for (const variant of variants) {
             try {
+              console.log("Storing variant:", variant);
               const { error: insertError } = await supabase
                 .from('generated_questions')
                 .insert({

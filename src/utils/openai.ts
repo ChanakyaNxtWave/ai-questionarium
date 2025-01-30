@@ -21,6 +21,8 @@ interface OpenAIResponse {
 
 export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
   try {
+    console.log("Generating questions with content:", content, "and unitTitle:", unitTitle);
+    
     const { data, error } = await supabase.functions.invoke('generate-questions', {
       body: { content, unitTitle },
     });
@@ -30,8 +32,10 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
       throw error;
     }
 
+    console.log("Raw response from generate-questions:", data);
     const rawQuestions = data.questions;
     const questions = parseOpenAIResponse(rawQuestions, unitTitle);
+    console.log("Parsed questions:", questions);
     
     return questions;
   } catch (error) {
@@ -75,6 +79,8 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<OpenAIRespons
 };
 
 const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIResponse[] => {
+  console.log("Parsing OpenAI response:", response);
+  
   const questions: OpenAIResponse[] = [];
   if (!response) {
     console.error('Empty response received');
@@ -82,6 +88,7 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
   }
 
   const questionBlocks = response.split('-END-').filter(block => block && block.trim());
+  console.log("Question blocks:", questionBlocks);
 
   const fields = [
     'TOPIC', 'CONCEPT', 'NEW_CONCEPTS', 'QUESTION_ID', 'QUESTION_KEY',
@@ -97,10 +104,11 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
   for (const block of questionBlocks) {
     try {
       const matches = Array.from(block.matchAll(pattern));
+      console.log("Matches for block:", matches);
       
       const question: any = {
         options: [],
-        unitTitle: unitTitle // Add unit title to each question
+        unitTitle: unitTitle
       };
 
       for (const match of matches) {
@@ -162,6 +170,8 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
         }
       }
 
+      console.log("Parsed question:", question);
+
       // Only add questions that have all required fields
       if (
         question.topic &&
@@ -186,5 +196,7 @@ const parseOpenAIResponse = (response: string, unitTitle: string): OpenAIRespons
       console.error('Error parsing question block:', error);
     }
   }
+  
+  console.log("Final parsed questions:", questions);
   return questions;
 };
