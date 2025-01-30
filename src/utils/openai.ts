@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { MCQ } from "@/types/mcq";
 
-export interface OpenAIResponse {
+export interface OpenAIResponse extends Omit<MCQ, 'id' | 'isSelected'> {
   topic: string;
   concept: string;
   questionKey: string;
@@ -18,7 +18,7 @@ export interface OpenAIResponse {
   unitTitle: string;
 }
 
-export const generateQuestions = async (content: string, unitTitle: string): Promise<OpenAIResponse[]> => {
+export const generateQuestions = async (content: string, unitTitle: string): Promise<MCQ[]> => {
   try {
     const { data, error } = await supabase.functions.invoke('generate-questions', {
       body: { content, unitTitle },
@@ -30,7 +30,13 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
     }
 
     const rawQuestions = data.questions;
-    const questions = parseOpenAIResponse(rawQuestions, unitTitle);
+    const parsedQuestions = parseOpenAIResponse(rawQuestions, unitTitle);
+    // Convert OpenAIResponse to MCQ by adding required properties
+    const questions: MCQ[] = parsedQuestions.map(q => ({
+      ...q,
+      id: crypto.randomUUID(),
+      isSelected: false
+    }));
     return questions;
   } catch (error) {
     console.error('[generateQuestions] Error:', error);
@@ -38,7 +44,7 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
   }
 };
 
-export const generateVariants = async (baseQuestion: MCQ): Promise<OpenAIResponse[]> => {
+export const generateVariants = async (baseQuestion: MCQ): Promise<MCQ[]> => {
   try {
     console.log('[generateVariants] Starting variant generation for question:', baseQuestion.questionKey);
     
@@ -56,9 +62,15 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<OpenAIRespons
       throw new Error('Invalid response format from generate-variants function');
     }
     
-    const variants = parseOpenAIResponse(data.rawResponse, baseQuestion.unitTitle);
-    console.log('[generateVariants] Successfully generated variants for question:', baseQuestion.questionKey);
+    const parsedVariants = parseOpenAIResponse(data.rawResponse, baseQuestion.unitTitle);
+    // Convert OpenAIResponse to MCQ by adding required properties
+    const variants: MCQ[] = parsedVariants.map(v => ({
+      ...v,
+      id: crypto.randomUUID(),
+      isSelected: false
+    }));
     
+    console.log('[generateVariants] Successfully generated variants for question:', baseQuestion.questionKey);
     return variants;
   } catch (error) {
     console.error('[generateVariants] Error:', error);
