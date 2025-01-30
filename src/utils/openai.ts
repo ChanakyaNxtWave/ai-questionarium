@@ -57,18 +57,15 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<OpenAIRespons
       throw error;
     }
 
-    if (!data?.variants) {
-      console.error('No variants data in response:', data);
+    if (!data?.rawResponse) {
+      console.error('No raw response in data:', data);
       throw new Error('Invalid response format from generate-variants function');
     }
 
-    console.log("Raw variants response:", data.variants);
+    console.log("Raw variants response:", data.rawResponse);
     
-    // Parse the variants response
-    const variants = data.variants.map((variant: any) => ({
-      ...variant,
-      unitTitle: baseQuestion.unitTitle
-    }));
+    // Parse the variants response using the existing parseOpenAIResponse function
+    const variants = parseOpenAIResponse(data.rawResponse, baseQuestion.unitTitle);
 
     console.log("Parsed variants:", variants);
     return variants;

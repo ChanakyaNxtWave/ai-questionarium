@@ -9,7 +9,6 @@ const corsHeaders = {
 serve(async (req) => {
   console.log("Generate variants function started");
   
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
@@ -26,7 +25,6 @@ serve(async (req) => {
 
     console.log("Received base question:", baseQuestion);
 
-    // Get Azure OpenAI configuration
     const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')?.replace(/\/$/, '');
     const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
     const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
@@ -38,14 +36,34 @@ serve(async (req) => {
 
     console.log('Sending request to Azure OpenAI...');
     
-    // Construct the prompt for variant generation
-    const prompt = `Generate variant questions for the following base question:
-    ${JSON.stringify(baseQuestion, null, 2)}
-    
-    Please create 3 different variants while maintaining:
-    1. The same learning outcome
-    2. Similar difficulty level
-    3. Different approaches to testing the same concept`;
+    const prompt = `Generate 3 variant questions for the following base question. Follow this format strictly for each variant:
+
+TOPIC: [topic]
+CONCEPT: [concept]
+QUESTION_KEY: [base_question_key]_v[number]
+QUESTION_TEXT: [question text]
+LEARNING_OUTCOME: [learning outcome]
+CONTENT_TYPE: [content type]
+QUESTION_TYPE: [question type]
+CODE: [code if any, or NA]
+CODE_LANGUAGE: [language if any, or NA]
+OPTION_1: [option 1]
+OPTION_2: [option 2]
+OPTION_3: [option 3]
+OPTION_4: [option 4]
+CORRECT_OPTION: [correct option number]
+EXPLANATION: [explanation]
+BLOOM_LEVEL: [bloom level]
+
+Base question:
+${JSON.stringify(baseQuestion, null, 2)}
+
+Important:
+1. Maintain similar difficulty level
+2. Test the same concept in different ways
+3. Add -END- after each variant
+4. Keep the learning outcome consistent
+5. Ensure QUESTION_KEY follows pattern: original_key_v1, original_key_v2, etc.`;
 
     const response = await fetch(
       `${azureEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`,
@@ -86,18 +104,11 @@ serve(async (req) => {
       throw new Error('Invalid response from Azure OpenAI');
     }
 
-    // Parse the response to create variants
-    const variants = [{
-      ...baseQuestion,
-      id: crypto.randomUUID(),
-      questionKey: `${baseQuestion.questionKey}_v1`,
-      questionCategory: 'VARIANT'
-    }];
-
-    console.log('Generated variants:', variants);
+    const rawResponse = data.choices[0].message.content;
+    console.log('Raw response content:', rawResponse);
 
     return new Response(
-      JSON.stringify({ variants }),
+      JSON.stringify({ rawResponse }),
       { 
         headers: { 
           ...corsHeaders, 
