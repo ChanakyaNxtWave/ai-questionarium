@@ -9,8 +9,8 @@ export interface OpenAIResponse extends Omit<MCQ, 'id' | 'isSelected'> {
   learningOutcome: string;
   contentType: string;
   questionType: string;
-  code?: string | null;
-  codeLanguage?: string | null;
+  code: string;
+  codeLanguage: string;
   options: string[];
   correctOption: string;
   explanation: string;
@@ -35,7 +35,8 @@ export const generateQuestions = async (content: string, unitTitle: string): Pro
     const questions: MCQ[] = parsedQuestions.map(q => ({
       ...q,
       id: crypto.randomUUID(),
-      isSelected: false
+      isSelected: false,
+      code: q.code || '', // Ensure code is never undefined
     }));
     return questions;
   } catch (error) {
@@ -67,7 +68,8 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<MCQ[]> => {
     const variants: MCQ[] = parsedVariants.map(v => ({
       ...v,
       id: crypto.randomUUID(),
-      isSelected: false
+      isSelected: false,
+      code: v.code || '', // Ensure code is never undefined
     }));
     
     console.log('[generateVariants] Successfully generated variants for question:', baseQuestion.questionKey);
