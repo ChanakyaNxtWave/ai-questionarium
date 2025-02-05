@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Pencil, Trash2, X, Check } from "lucide-react";
 import { MCQ } from "@/types/mcq";
+import ReactMarkdown from "react-markdown";
 
 interface QuestionCardProps {
   question: MCQ;
@@ -58,7 +59,11 @@ export const QuestionCard = ({
                 onChange={(e) => onEditQuestionChange('questionText', e.target.value)}
               />
             ) : (
-              <p className="font-medium">{index + 1}. {question.questionText}</p>
+              <div className="prose prose-sm max-w-none">
+                <ReactMarkdown>
+                  {`${index + 1}. ${question.questionText}`}
+                </ReactMarkdown>
+              </div>
             )}
             
             {question.code !== "NA" && (
@@ -88,7 +93,9 @@ export const QuestionCard = ({
                       }}
                     />
                   ) : (
-                    <div>{option}</div>
+                    <div className="prose prose-sm max-w-none flex-1">
+                      <ReactMarkdown>{option}</ReactMarkdown>
+                    </div>
                   )}
                 </div>
               ))}
@@ -103,7 +110,9 @@ export const QuestionCard = ({
                   onChange={(e) => onEditQuestionChange('explanation', e.target.value)}
                 />
               ) : (
-                <p className="mt-1 text-gray-600">{question.explanation}</p>
+                <div className="prose prose-sm max-w-none mt-1 text-gray-600">
+                  <ReactMarkdown>{question.explanation}</ReactMarkdown>
+                </div>
               )}
             </div>
           </div>
