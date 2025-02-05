@@ -38,7 +38,7 @@ export const QuestionCard = ({
     console.log(content, "Content")
     
     try {
-      parsedContent = JSON.parse(content)
+      const parsedContent = JSON.parse(content)
       console.log(parsedContent, "parsedContent")
       return parsedContent;
     } catch (e) {
