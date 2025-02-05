@@ -35,8 +35,12 @@ export const QuestionCard = ({
 }: QuestionCardProps) => {
   // Helper function to safely parse JSON strings
   const parseContent = (content: string) => {
+    console.log(content, "Content")
+    
     try {
-      return JSON.parse(content);
+      parsedContent = JSON.parse(content)
+      console.log(parsedContent, "parsedContent")
+      return ;
     } catch (e) {
       return content; // Return original content if parsing fails
     }
