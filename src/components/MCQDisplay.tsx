@@ -54,15 +54,13 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
       
       // Generate variants for each selected question individually
       for (const baseQuestion of selectedQuestions) {
-        console.log("Generating variants for question:", baseQuestion);
         try {
           const variants = await generateVariants(baseQuestion);
-          console.log("Generated variants for question:", variants);
+          console.log("Generated variants:", variants);
           
           // Store each variant in the database
           for (const variant of variants) {
             try {
-              console.log("Storing variant:", variant);
               const { error: insertError } = await supabase
                 .from('generated_questions')
                 .insert({
