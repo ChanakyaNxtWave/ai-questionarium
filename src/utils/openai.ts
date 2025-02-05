@@ -52,7 +52,9 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<MCQ[]> => {
     const { data, error } = await supabase.functions.invoke('generate-variants', {
       body: { baseQuestion },
     });
-
+    console.log("###########")
+    console.log(data)
+    console.log("###########")
     if (error) {
       console.error('[generateVariants] Error from Supabase function:', error);
       throw error;
@@ -71,8 +73,6 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<MCQ[]> => {
       isSelected: false,
       code: v.code || '', // Ensure code is never undefined
     }));
-    
-    console.log('[generateVariants] Successfully generated variants for question:', baseQuestion.questionKey);
     return variants;
   } catch (error) {
     console.error('[generateVariants] Error:', error);
