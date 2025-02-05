@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,6 +33,15 @@ export const QuestionCard = ({
   onEditQuestionChange,
   isSelected,
 }: QuestionCardProps) => {
+  // Helper function to safely parse JSON strings
+  const parseContent = (content: string) => {
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      return content; // Return original content if parsing fails
+    }
+  };
+
   return (
     <div className="p-6 border rounded-lg space-y-4 bg-white shadow-sm">
       <div className="flex justify-between items-start">
@@ -61,7 +71,7 @@ export const QuestionCard = ({
             ) : (
               <div className="prose prose-sm max-w-none">
                 <ReactMarkdown>
-                  {`${index + 1}. ${question.questionText}`}
+                  {`${index + 1}. ${parseContent(question.questionText)}`}
                 </ReactMarkdown>
               </div>
             )}
@@ -94,7 +104,7 @@ export const QuestionCard = ({
                     />
                   ) : (
                     <div className="prose prose-sm max-w-none flex-1">
-                      <ReactMarkdown>{option}</ReactMarkdown>
+                      <ReactMarkdown>{parseContent(option)}</ReactMarkdown>
                     </div>
                   )}
                 </div>
@@ -111,7 +121,7 @@ export const QuestionCard = ({
                 />
               ) : (
                 <div className="prose prose-sm max-w-none mt-1 text-gray-600">
-                  <ReactMarkdown>{question.explanation}</ReactMarkdown>
+                  <ReactMarkdown>{parseContent(question.explanation)}</ReactMarkdown>
                 </div>
               )}
             </div>
