@@ -40,7 +40,7 @@ export const QuestionCard = ({
     try {
       parsedContent = JSON.parse(content)
       console.log(parsedContent, "parsedContent")
-      return ;
+      return parsedContent;
     } catch (e) {
       return content; // Return original content if parsing fails
     }
