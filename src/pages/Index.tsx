@@ -29,7 +29,7 @@ const Index = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            AI-Powered MCQ Generator
+            AI-Powered Objective Content Generator
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Generate high-quality multiple choice questions for programming languages
