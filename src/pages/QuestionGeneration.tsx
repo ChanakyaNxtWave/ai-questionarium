@@ -89,21 +89,49 @@ export default function QuestionGeneration() {
     try {
       setIsLoading(true);
       
-      // First, create or get the unit
+      // First, get or create the SQL course
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('name', 'SQL')
+        .maybeSingle();
+
+      if (courseError) throw courseError;
+
+      let courseId: string;
+      if (!courseData) {
+        // Create new course if it doesn't exist
+        const { data: newCourse, error: createCourseError } = await supabase
+          .from('courses')
+          .insert({ name: 'SQL' })
+          .select('id')
+          .single();
+
+        if (createCourseError) throw createCourseError;
+        courseId = newCourse.id;
+      } else {
+        courseId = courseData.id;
+      }
+
+      // Then, create or get the unit using the course_id
       const { data: unitData, error: unitError } = await supabase
         .from('units')
         .select('id')
         .eq('name', values.unitTitle)
+        .eq('course_id', courseId)
         .maybeSingle();
 
       if (unitError) throw unitError;
 
       let unitId: string;
       if (!unitData) {
-        // Create new unit if it doesn't exist
+        // Create new unit if it doesn't exist, including the course_id
         const { data: newUnit, error: createUnitError } = await supabase
           .from('units')
-          .insert({ name: values.unitTitle })
+          .insert({ 
+            name: values.unitTitle,
+            course_id: courseId 
+          })
           .select('id')
           .single();
 
