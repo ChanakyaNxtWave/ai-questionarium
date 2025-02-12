@@ -39,12 +39,6 @@ export const generateQuestions = async (content: string, unitId: string): Promis
 
     const rawQuestions = data.questions;
     const parsedQuestions = parseOpenAIResponse(rawQuestions, unitId);
-    
-    // Store questions in the database
-    for (const question of parsedQuestions) {
-      await storeQuestion(question);
-    }
-
     return parsedQuestions;
   } catch (error) {
     console.error('[generateQuestions] Error:', error);
@@ -70,11 +64,6 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<MCQ[]> => {
       isSelected: false
     }));
 
-    // Store variants in the database
-    for (const variant of variants) {
-      await storeQuestion(variant);
-    }
-
     return variants;
   } catch (error) {
     console.error('[generateVariants] Error:', error);
@@ -99,7 +88,7 @@ const storeQuestion = async (question: MCQ) => {
         code_language: question.codeLanguage,
         learning_outcome: question.learningOutcome,
         explanation: question.explanation,
-        bloom_level: question.bloomLevel
+        bloom_level: question.bloomLevel || 'UNDERSTAND' // Set default bloom level
       })
       .select('id')
       .single();
@@ -214,7 +203,8 @@ const parseOpenAIResponse = (response: string, unitId: string): MCQ[] => {
       const matches = Array.from(block.matchAll(pattern));
       const question: any = {
         options: [],
-        unitTitle: unitId
+        unitId,
+        bloomLevel: 'UNDERSTAND' // Set default bloom level
       };
     
       for (const match of matches) {
@@ -260,7 +250,7 @@ const parseOpenAIResponse = (response: string, unitId: string): MCQ[] => {
             question.explanation = value;
             break;
           case 'BLOOM_LEVEL':
-            question.bloomLevel = value;
+            question.bloomLevel = value || 'UNDERSTAND';
             break;
           default:
             if (key.startsWith('OPTION_') && !key.endsWith('_ID')) {
