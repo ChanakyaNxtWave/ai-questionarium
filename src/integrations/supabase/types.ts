@@ -9,71 +9,163 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      generated_questions: {
+      code_analysis_expected_output: {
         Row: {
-          bloom_level: string
-          code: string | null
-          code_language: string | null
-          concept: string
-          content_type: string
-          correct_option: string
           created_at: string
-          explanation: string
+          expected_output: string
           id: string
-          is_selected: boolean | null
-          learning_outcome: string
-          options: string[]
-          question_category: string
-          question_key: string
-          question_text: string
-          question_type: string
-          topic: string
-          unit_title: string
+          input_case: string | null
+          question_id: string
+        }
+        Insert: {
+          created_at?: string
+          expected_output: string
+          id?: string
+          input_case?: string | null
+          question_id: string
+        }
+        Update: {
+          created_at?: string
+          expected_output?: string
+          id?: string
+          input_case?: string | null
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_analysis_expected_output_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
           updated_at: string
         }
         Insert: {
-          bloom_level: string
-          code?: string | null
-          code_language?: string | null
-          concept: string
-          content_type: string
-          correct_option: string
           created_at?: string
-          explanation: string
           id?: string
-          is_selected?: boolean | null
-          learning_outcome: string
-          options: string[]
-          question_category?: string
-          question_key: string
-          question_text: string
-          question_type: string
-          topic: string
-          unit_title: string
+          name: string
           updated_at?: string
         }
         Update: {
-          bloom_level?: string
-          code?: string | null
-          code_language?: string | null
-          concept?: string
-          content_type?: string
-          correct_option?: string
           created_at?: string
-          explanation?: string
           id?: string
-          is_selected?: boolean | null
-          learning_outcome?: string
-          options?: string[]
-          question_category?: string
-          question_key?: string
-          question_text?: string
-          question_type?: string
-          topic?: string
-          unit_title?: string
+          name?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      external_resources: {
+        Row: {
+          created_at: string
+          db_url: string
+          id: string
+          question_id: string
+          tables_used: string[]
+          test_url: string
+        }
+        Insert: {
+          created_at?: string
+          db_url: string
+          id?: string
+          question_id: string
+          tables_used: string[]
+          test_url: string
+        }
+        Update: {
+          created_at?: string
+          db_url?: string
+          id?: string
+          question_id?: string
+          tables_used?: string[]
+          test_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_resources_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fill_in_blank_answers: {
+        Row: {
+          blank_position: number
+          correct_answer: string
+          created_at: string
+          expected_output: string | null
+          id: string
+          question_id: string
+        }
+        Insert: {
+          blank_position: number
+          correct_answer: string
+          created_at?: string
+          expected_output?: string | null
+          id?: string
+          question_id: string
+        }
+        Update: {
+          blank_position?: number
+          correct_answer?: string
+          created_at?: string
+          expected_output?: string | null
+          id?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fill_in_blank_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      options: {
+        Row: {
+          created_at: string
+          id: string
+          is_correct: boolean
+          option_order: number
+          option_text: string
+          question_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_correct: boolean
+          option_order: number
+          option_text: string
+          question_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          option_order?: number
+          option_text?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       programming_languages: {
         Row: {
@@ -131,6 +223,132 @@ export type Database = {
           },
         ]
       }
+      questions: {
+        Row: {
+          base_question_keys: string | null
+          bloom_level: string
+          code: string | null
+          code_language: string | null
+          content_type: Database["public"]["Enums"]["content_type"]
+          created_at: string
+          explanation: string | null
+          id: string
+          learning_outcome: string
+          question_key: string
+          question_text: string
+          question_type: Database["public"]["Enums"]["question_type"]
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_question_keys?: string | null
+          bloom_level: string
+          code?: string | null
+          code_language?: string | null
+          content_type: Database["public"]["Enums"]["content_type"]
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          learning_outcome: string
+          question_key: string
+          question_text: string
+          question_type: Database["public"]["Enums"]["question_type"]
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_question_keys?: string | null
+          bloom_level?: string
+          code?: string | null
+          code_language?: string | null
+          content_type?: Database["public"]["Enums"]["content_type"]
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          learning_outcome?: string
+          question_key?: string
+          question_text?: string
+          question_type?: Database["public"]["Enums"]["question_type"]
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rearrangement_steps: {
+        Row: {
+          correct_order: number
+          created_at: string
+          display_order: number
+          id: string
+          question_id: string
+          step_text: string
+        }
+        Insert: {
+          correct_order: number
+          created_at?: string
+          display_order: number
+          id?: string
+          question_id: string
+          step_text: string
+        }
+        Update: {
+          correct_order?: number
+          created_at?: string
+          display_order?: number
+          id?: string
+          question_id?: string
+          step_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rearrangement_steps_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -139,7 +357,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      content_type: "HTML" | "MARKDOWN"
       prompt_type: "topics" | "questions"
+      question_type:
+        | "MULTIPLE_CHOICE"
+        | "MORE_THAN_ONE_MULTIPLE_CHOICE"
+        | "CODE_ANALYSIS_MULTIPLE_CHOICE"
+        | "CODE_ANALYSIS_MORE_THAN_ONE_MULTIPLE_CHOICE"
+        | "CODE_ANALYSIS_TEXTUAL"
+        | "FIB_CODING"
+        | "FIB_SQL_CODING"
+        | "REARRANGE"
     }
     CompositeTypes: {
       [_ in never]: never
