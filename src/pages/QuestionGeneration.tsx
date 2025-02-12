@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams, useNavigate } from "react-router-dom";
@@ -87,36 +88,72 @@ export default function QuestionGeneration() {
 
     try {
       setIsLoading(true);
-      const newQuestions = await generateQuestions(values.content, values.unitTitle);
       
+      // First, create or get the unit
+      const { data: unitData, error: unitError } = await supabase
+        .from('units')
+        .select('id')
+        .eq('name', values.unitTitle)
+        .maybeSingle();
+
+      if (unitError) throw unitError;
+
+      let unitId: string;
+      if (!unitData) {
+        // Create new unit if it doesn't exist
+        const { data: newUnit, error: createUnitError } = await supabase
+          .from('units')
+          .insert({ name: values.unitTitle })
+          .select('id')
+          .single();
+
+        if (createUnitError) throw createUnitError;
+        unitId = newUnit.id;
+      } else {
+        unitId = unitData.id;
+      }
+
+      const newQuestions = await generateQuestions(values.content, unitId);
+      
+      // Store each question in the database
       for (const question of newQuestions) {
-        // Add validation to ensure correct_option is not null
-        if (!question.correctOption) {
-          console.error('Question missing correct_option:', question);
-          continue; // Skip questions with missing correct_option
-        }
+        try {
+          const { data: questionData, error: questionError } = await supabase
+            .from('questions')
+            .insert({
+              unit_id: unitId,
+              question_type: question.questionType,
+              question_key: question.questionKey,
+              base_question_keys: question.baseQuestionKeys,
+              question_text: question.questionText,
+              content_type: question.contentType,
+              code: question.code,
+              code_language: question.codeLanguage,
+              learning_outcome: question.learningOutcome,
+              explanation: question.explanation,
+              bloom_level: question.bloomLevel
+            })
+            .select('id')
+            .single();
 
-        const { error } = await supabase
-          .from('generated_questions')
-          .insert({
-            topic: question.topic,
-            concept: question.concept,
-            question_key: question.questionKey,
-            question_text: question.questionText,
-            learning_outcome: question.learningOutcome,
-            content_type: question.contentType,
-            question_type: question.questionType,
-            code: question.code || null, // Ensure null is explicitly set if code is falsy
-            code_language: question.codeLanguage || null, // Ensure null is explicitly set if codeLanguage is falsy
-            options: question.options,
-            correct_option: question.correctOption,
-            explanation: question.explanation,
-            bloom_level: question.bloomLevel,
-            unit_title: values.unitTitle,
-            question_category: 'BASE_QUESTION'
-          });
+          if (questionError) throw questionError;
 
-        if (error) {
+          // Insert options if present
+          if (question.options && question.options.length > 0) {
+            const { error: optionsError } = await supabase
+              .from('options')
+              .insert(
+                question.options.map(opt => ({
+                  question_id: questionData.id,
+                  option_text: opt.text,
+                  option_order: opt.order,
+                  is_correct: opt.isCorrect
+                }))
+              );
+
+            if (optionsError) throw optionsError;
+          }
+        } catch (error) {
           console.error('Error storing question:', error);
           toast({
             title: "Error",
@@ -126,9 +163,7 @@ export default function QuestionGeneration() {
         }
       }
 
-      // Only add successfully stored questions to the state
-      const validQuestions = newQuestions.filter(q => q.correctOption);
-      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...validQuestions]);
+      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
       
       toast({
         title: "Success",
