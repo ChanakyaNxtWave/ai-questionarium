@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,32 +14,62 @@ export const VariantsDisplay = () => {
   useEffect(() => {
     const fetchVariants = async () => {
       try {
-        const { data, error } = await supabase
-          .from('generated_questions')
-          .select('*')
-          .eq('unit_title', unitTitle)
-          .eq('question_category', 'VARIANT');
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('questions')
+          .select(`
+            *,
+            units(name),
+            options(*),
+            fill_in_blank_answers(*),
+            rearrangement_steps(*),
+            code_analysis_expected_output(*),
+            external_resources(*)
+          `)
+          .eq('units.name', unitTitle);
 
-        if (error) throw error;
+        if (questionsError) throw questionsError;
 
-        // Map the Supabase response to match MCQ interface
-        const mappedVariants: MCQ[] = (data || []).map(item => ({
+        // Map the database response to MCQ interface
+        const mappedVariants: MCQ[] = (questionsData || []).map(item => ({
           id: item.id,
-          topic: item.topic,
-          concept: item.concept,
-          questionKey: item.question_key,
-          questionText: item.question_text,
-          learningOutcome: item.learning_outcome,
-          contentType: item.content_type,
+          unitId: item.unit_id,
           questionType: item.question_type,
-          code: item.code || '',
-          codeLanguage: item.code_language || '',
-          options: item.options,
-          correctOption: item.correct_option,
+          questionKey: item.question_key,
+          baseQuestionKeys: item.base_question_keys,
+          questionText: item.question_text,
+          contentType: item.content_type,
+          code: item.code,
+          codeLanguage: item.code_language,
+          learningOutcome: item.learning_outcome,
           explanation: item.explanation,
           bloomLevel: item.bloom_level,
-          unitTitle: item.unit_title,
-          isSelected: item.is_selected || false
+          options: item.options?.map((opt: any) => ({
+            id: opt.id,
+            text: opt.option_text,
+            order: opt.option_order,
+            isCorrect: opt.is_correct
+          })) || [],
+          fibAnswers: item.fill_in_blank_answers?.map((fib: any) => ({
+            position: fib.blank_position,
+            correctAnswer: fib.correct_answer,
+            expectedOutput: fib.expected_output
+          })),
+          rearrangeSteps: item.rearrangement_steps?.map((step: any) => ({
+            text: step.step_text,
+            displayOrder: step.display_order,
+            correctOrder: step.correct_order
+          })),
+          codeAnalysis: item.code_analysis_expected_output?.map((analysis: any) => ({
+            inputCase: analysis.input_case,
+            expectedOutput: analysis.expected_output
+          })),
+          externalResources: item.external_resources?.[0] ? {
+            dbUrl: item.external_resources[0].db_url,
+            testUrl: item.external_resources[0].test_url,
+            tablesUsed: item.external_resources[0].tables_used
+          } : undefined,
+          unitTitle: item.units?.name,
+          isSelected: false
         }));
 
         setVariants(mappedVariants);

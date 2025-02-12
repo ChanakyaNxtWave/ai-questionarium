@@ -33,19 +33,6 @@ export const QuestionCard = ({
   onEditQuestionChange,
   isSelected,
 }: QuestionCardProps) => {
-  // Helper function to safely parse JSON strings
-  const parseContent = (content: string) => {
-    console.log(content, "Content")
-    
-    try {
-      const parsedContent = JSON.parse(content)
-      console.log(parsedContent, "parsedContent")
-      return parsedContent;
-    } catch (e) {
-      return content; // Return original content if parsing fails
-    }
-  };
-
   return (
     <div className="p-6 border rounded-lg space-y-4 bg-white shadow-sm">
       <div className="flex justify-between items-start">
@@ -69,18 +56,16 @@ export const QuestionCard = ({
             {isEditing ? (
               <textarea
                 className="w-full p-2 border rounded"
-                value={editedQuestion?.questionText}
+                value={editedQuestion?.questionText || ''}
                 onChange={(e) => onEditQuestionChange('questionText', e.target.value)}
               />
             ) : (
               <div className="prose prose-sm max-w-none">
-                <ReactMarkdown>
-                  {`${index + 1}. ${parseContent(question.questionText)}`}
-                </ReactMarkdown>
+                <ReactMarkdown>{`${index + 1}. ${question.questionText}`}</ReactMarkdown>
               </div>
             )}
             
-            {question.code !== "NA" && (
+            {question.code && question.code !== "NA" && (
               <pre className="p-4 bg-gray-50 rounded-md overflow-x-auto">
                 <code>{question.code}</code>
               </pre>
@@ -99,16 +84,21 @@ export const QuestionCard = ({
                     <input
                       type="text"
                       className="flex-1 p-1 border rounded"
-                      value={editedQuestion?.options[optIndex]}
+                      value={editedQuestion?.options[optIndex]?.text || ''}
                       onChange={(e) => {
-                        const newOptions = [...(editedQuestion?.options || [])];
-                        newOptions[optIndex] = e.target.value;
-                        onEditQuestionChange('options', newOptions);
+                        if (editedQuestion) {
+                          const newOptions = [...editedQuestion.options];
+                          newOptions[optIndex] = {
+                            ...newOptions[optIndex],
+                            text: e.target.value
+                          };
+                          onEditQuestionChange('options', newOptions);
+                        }
                       }}
                     />
                   ) : (
                     <div className="prose prose-sm max-w-none flex-1">
-                      <ReactMarkdown>{parseContent(option)}</ReactMarkdown>
+                      <ReactMarkdown>{option.text}</ReactMarkdown>
                     </div>
                   )}
                 </div>
@@ -120,12 +110,12 @@ export const QuestionCard = ({
               {isEditing ? (
                 <textarea
                   className="w-full mt-2 p-2 border rounded"
-                  value={editedQuestion?.explanation}
+                  value={editedQuestion?.explanation || ''}
                   onChange={(e) => onEditQuestionChange('explanation', e.target.value)}
                 />
               ) : (
                 <div className="prose prose-sm max-w-none mt-1 text-gray-600">
-                  <ReactMarkdown>{parseContent(question.explanation)}</ReactMarkdown>
+                  <ReactMarkdown>{question.explanation || ''}</ReactMarkdown>
                 </div>
               )}
             </div>
