@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,42 +58,6 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         try {
           const variants = await generateVariants(baseQuestion);
           console.log("Generated variants:", variants);
-          
-          // Store each variant in the database
-          for (const variant of variants) {
-            try {
-              const { error: insertError } = await supabase
-                .from('generated_questions')
-                .insert({
-                  topic: variant.topic,
-                  concept: variant.concept,
-                  question_key: variant.questionKey,
-                  question_text: variant.questionText,
-                  learning_outcome: variant.learningOutcome,
-                  content_type: variant.contentType,
-                  question_type: variant.questionType,
-                  code: variant.code || null,
-                  code_language: variant.codeLanguage || null,
-                  options: variant.options,
-                  correct_option: variant.correctOption,
-                  explanation: variant.explanation,
-                  bloom_level: variant.bloomLevel,
-                  unit_title: baseQuestion.unitTitle,
-                  question_category: 'VARIANT'
-                });
-
-              if (insertError) {
-                console.error('Error storing variant:', insertError);
-                toast({
-                  title: "Error",
-                  description: `Failed to store variant: ${insertError.message}`,
-                  variant: "destructive",
-                });
-              }
-            } catch (error) {
-              console.error('Error storing variant:', error);
-            }
-          }
         } catch (error) {
           console.error('Error generating variants for question:', baseQuestion, error);
           toast({
@@ -108,7 +73,7 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         description: "Variants generated and stored successfully",
       });
       
-      navigate(`/generate/sql/${selectedQuestions[0].unitTitle}`);
+      navigate(`/variants/${selectedQuestions[0].unitTitle}`);
     } catch (error) {
       console.error('Error in handleGenerateVariants:', error);
       toast({
@@ -153,16 +118,30 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
 
     try {
       const { error: updateError } = await supabase
-        .from('generated_questions')
+        .from('questions')
         .update({
           question_text: editedQuestion.questionText,
           explanation: editedQuestion.explanation,
-          options: editedQuestion.options,
-          correct_option: editedQuestion.correctOption,
         })
-        .eq('question_key', question.questionKey);
+        .eq('id', question.id);
 
       if (updateError) throw updateError;
+
+      // Update options
+      if (editedQuestion.options) {
+        for (const option of editedQuestion.options) {
+          const { error: optionError } = await supabase
+            .from('options')
+            .upsert({
+              question_id: question.id,
+              option_text: option.text,
+              option_order: option.order,
+              is_correct: option.isCorrect,
+            });
+
+          if (optionError) throw optionError;
+        }
+      }
 
       setQuestions(questions.map(q => 
         q.id === question.id ? { ...q, ...editedQuestion } : q
@@ -198,9 +177,9 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
 
     try {
       const { error: deleteError } = await supabase
-        .from('generated_questions')
+        .from('questions')
         .delete()
-        .eq('question_key', question.questionKey);
+        .eq('id', question.id);
 
       if (deleteError) throw deleteError;
 
@@ -231,28 +210,11 @@ export const MCQDisplay = ({ questions: initialQuestions }: MCQDisplayProps) => 
         setSelectedQuestionKeys(prev => [...prev, question.questionKey]);
       }
 
-      const { error: updateError } = await supabase
-        .from('generated_questions')
-        .update({
-          is_selected: !isCurrentlySelected
-        })
-        .eq('question_key', question.questionKey);
-
-      if (updateError) {
-        console.error('Supabase update error:', updateError);
-        // Revert the selection if the update failed
-        if (isCurrentlySelected) {
-          setSelectedQuestionKeys(prev => [...prev, question.questionKey]);
-        } else {
-          setSelectedQuestionKeys(prev => prev.filter(key => key !== question.questionKey));
-        }
-        toast({
-          title: "Error",
-          description: "Failed to update question selection",
-          variant: "destructive",
-        });
-        throw updateError;
-      }
+      setQuestions(questions.map(q => 
+        q.questionKey === question.questionKey 
+          ? { ...q, isSelected: !isCurrentlySelected }
+          : q
+      ));
 
       toast({
         title: "Success",

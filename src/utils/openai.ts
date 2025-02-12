@@ -52,6 +52,36 @@ export const generateQuestions = async (content: string, unitId: string): Promis
   }
 };
 
+export const generateVariants = async (baseQuestion: MCQ): Promise<MCQ[]> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-variants', {
+      body: { baseQuestion },
+    });
+
+    if (error) {
+      console.error('[generateVariants] Error from Supabase function:', error);
+      throw error;
+    }
+
+    const variants = data.variants.map((variant: any) => ({
+      ...variant,
+      id: crypto.randomUUID(),
+      unitId: baseQuestion.unitId,
+      isSelected: false
+    }));
+
+    // Store variants in the database
+    for (const variant of variants) {
+      await storeQuestion(variant);
+    }
+
+    return variants;
+  } catch (error) {
+    console.error('[generateVariants] Error:', error);
+    throw error;
+  }
+};
+
 const storeQuestion = async (question: MCQ) => {
   try {
     // 1. Insert the main question

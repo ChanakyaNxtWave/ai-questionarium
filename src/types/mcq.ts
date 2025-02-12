@@ -2,6 +2,8 @@
 export interface MCQ {
   id: string;
   unitId: string;
+  topic?: string;
+  concept?: string;
   questionType: 'MULTIPLE_CHOICE' | 'MORE_THAN_ONE_MULTIPLE_CHOICE' | 'CODE_ANALYSIS_MULTIPLE_CHOICE' | 'CODE_ANALYSIS_MORE_THAN_ONE_MULTIPLE_CHOICE' | 'CODE_ANALYSIS_TEXTUAL' | 'FIB_CODING' | 'FIB_SQL_CODING' | 'REARRANGE';
   questionKey: string;
   baseQuestionKeys?: string;
@@ -41,4 +43,6 @@ export interface MCQ {
     testUrl: string;
     tablesUsed: string[];
   };
+  isSelected?: boolean;
+  unitTitle?: string;
 }
