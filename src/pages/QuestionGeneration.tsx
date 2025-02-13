@@ -13,6 +13,7 @@ import { TopicsSelection } from "@/components/TopicsSelection";
 import { MCQDisplay } from "@/components/MCQDisplay";
 import { ContentInput } from "@/components/ContentInput";
 import { generateQuestions } from "@/utils/openai";
+import { storeQuestion } from "@/utils/questionStorage";
 import { supabase } from "@/integrations/supabase/client";
 import { sqlTopics } from "@/data/sqlTopics";
 import { MCQ } from "@/types/mcq";
@@ -100,7 +101,6 @@ export default function QuestionGeneration() {
 
       let courseId: string;
       if (!courseData) {
-        // Create new course if it doesn't exist
         const { data: newCourse, error: createCourseError } = await supabase
           .from('courses')
           .insert({ name: 'SQL' })
@@ -113,7 +113,7 @@ export default function QuestionGeneration() {
         courseId = courseData.id;
       }
 
-      // Then, create or get the unit using the course_id
+      // Create or get the unit
       const { data: unitData, error: unitError } = await supabase
         .from('units')
         .select('id')
@@ -125,7 +125,6 @@ export default function QuestionGeneration() {
 
       let unitId: string;
       if (!unitData) {
-        // Create new unit if it doesn't exist, including the course_id
         const { data: newUnit, error: createUnitError } = await supabase
           .from('units')
           .insert({ 
@@ -141,57 +140,25 @@ export default function QuestionGeneration() {
         unitId = unitData.id;
       }
 
+      // Generate questions
       const newQuestions = await generateQuestions(values.content, unitId);
       
-      // Store each question in the database
+      // Store each question in the database sequentially
       for (const question of newQuestions) {
         try {
-          const { data: questionData, error: questionError } = await supabase
-            .from('questions')
-            .insert({
-              unit_id: unitId,
-              question_type: question.questionType,
-              question_key: question.questionKey,
-              base_question_keys: question.baseQuestionKeys,
-              question_text: question.questionText,
-              content_type: question.contentType,
-              code: question.code,
-              code_language: question.codeLanguage,
-              learning_outcome: question.learningOutcome,
-              explanation: question.explanation,
-              bloom_level: question.bloomLevel
-            })
-            .select('id')
-            .single();
-
-          if (questionError) throw questionError;
-
-          // Insert options if present
-          if (question.options && question.options.length > 0) {
-            const { error: optionsError } = await supabase
-              .from('options')
-              .insert(
-                question.options.map(opt => ({
-                  question_id: questionData.id,
-                  option_text: opt.text,
-                  option_order: opt.order,
-                  is_correct: opt.isCorrect
-                }))
-              );
-
-            if (optionsError) throw optionsError;
-          }
+          await storeQuestion(question);
         } catch (error) {
           console.error('Error storing question:', error);
           toast({
-            title: "Error",
-            description: `Failed to store question: ${error.message}`,
+            title: "Warning",
+            description: `Failed to store a question: ${error.message}`,
             variant: "destructive",
           });
         }
       }
 
-      setGeneratedQuestions(prevQuestions => [...prevQuestions, ...newQuestions]);
+      // Update local state with successfully generated questions
+      setGeneratedQuestions(prev => [...prev, ...newQuestions]);
       
       toast({
         title: "Success",
