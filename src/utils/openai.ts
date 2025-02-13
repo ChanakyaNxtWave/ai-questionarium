@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { MCQ } from "@/types/mcq";
 
@@ -26,6 +27,45 @@ export interface OpenAIResponse {
   correctOrders?: number[];
 }
 
+const generateUniqueQuestionKey = async (baseKey: string): Promise<string> => {
+  let attemptCount = 0;
+  let uniqueKey = baseKey;
+  
+  while (attemptCount < 1000) { // Safety limit to prevent infinite loops
+    // Check if the key exists
+    const { data, error } = await supabase
+      .from('questions')
+      .select('id')
+      .eq('question_key', uniqueKey)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking question key:', error);
+      throw error;
+    }
+
+    // If no data found, the key is unique
+    if (!data) {
+      return uniqueKey;
+    }
+
+    // If key exists, append a number or increment it
+    attemptCount++;
+    const match = uniqueKey.match(/^([A-Z]+)(\d+)$/);
+    if (match) {
+      // If the key already has a number, increment it
+      const prefix = match[1];
+      const num = parseInt(match[2]);
+      uniqueKey = `${prefix}${(num + attemptCount).toString().padStart(2, '0')}`;
+    } else {
+      // If the key doesn't have a number, append one
+      uniqueKey = `${baseKey}${attemptCount.toString().padStart(2, '0')}`;
+    }
+  }
+
+  throw new Error('Unable to generate unique question key after multiple attempts');
+};
+
 export const generateQuestions = async (content: string, unitId: string): Promise<MCQ[]> => {
   try {
     const { data, error } = await supabase.functions.invoke('generate-questions', {
@@ -38,7 +78,7 @@ export const generateQuestions = async (content: string, unitId: string): Promis
     }
 
     const rawQuestions = data.questions;
-    const parsedQuestions = parseOpenAIResponse(rawQuestions, unitId);
+    const parsedQuestions = await parseOpenAIResponse(rawQuestions, unitId);
     return parsedQuestions;
   } catch (error) {
     console.error('[generateQuestions] Error:', error);
@@ -61,6 +101,7 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<MCQ[]> => {
       ...variant,
       id: crypto.randomUUID(),
       unitId: baseQuestion.unitId,
+      category: 'VARIANT', // Set category as VARIANT for generated variants
       isSelected: false
     }));
 
@@ -73,14 +114,17 @@ export const generateVariants = async (baseQuestion: MCQ): Promise<MCQ[]> => {
 
 const storeQuestion = async (question: MCQ) => {
   try {
-    // 1. Insert the main question
+    // Generate a unique question key before inserting
+    const uniqueQuestionKey = await generateUniqueQuestionKey(question.questionKey);
+    
+    // 1. Insert the main question with the unique key
     const { data: questionData, error: questionError } = await supabase
       .from('questions')
       .insert({
         id: question.id,
         unit_id: question.unitId,
         question_type: question.questionType,
-        question_key: question.questionKey,
+        question_key: uniqueQuestionKey,
         base_question_keys: question.baseQuestionKeys,
         question_text: question.questionText,
         content_type: question.contentType,
@@ -88,7 +132,8 @@ const storeQuestion = async (question: MCQ) => {
         code_language: question.codeLanguage,
         learning_outcome: question.learningOutcome,
         explanation: question.explanation,
-        bloom_level: question.bloomLevel || 'UNDERSTAND' // Set default bloom level
+        bloom_level: question.bloomLevel || 'UNDERSTAND', // Set default bloom level
+        category: question.category || 'BASE' // Set default category
       })
       .select('id')
       .single();
