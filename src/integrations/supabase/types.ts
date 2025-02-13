@@ -227,6 +227,7 @@ export type Database = {
         Row: {
           base_question_keys: string | null
           bloom_level: string
+          category: Database["public"]["Enums"]["question_category"]
           code: string | null
           code_language: string | null
           content_type: Database["public"]["Enums"]["content_type"]
@@ -243,6 +244,7 @@ export type Database = {
         Insert: {
           base_question_keys?: string | null
           bloom_level: string
+          category?: Database["public"]["Enums"]["question_category"]
           code?: string | null
           code_language?: string | null
           content_type: Database["public"]["Enums"]["content_type"]
@@ -259,6 +261,7 @@ export type Database = {
         Update: {
           base_question_keys?: string | null
           bloom_level?: string
+          category?: Database["public"]["Enums"]["question_category"]
           code?: string | null
           code_language?: string | null
           content_type?: Database["public"]["Enums"]["content_type"]
@@ -359,6 +362,7 @@ export type Database = {
     Enums: {
       content_type: "HTML" | "MARKDOWN"
       prompt_type: "topics" | "questions"
+      question_category: "BASE" | "VARIANT" | "OTHER"
       question_type:
         | "MULTIPLE_CHOICE"
         | "MORE_THAN_ONE_MULTIPLE_CHOICE"

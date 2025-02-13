@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { X, Check } from "lucide-react";
 import { MCQ } from "@/types/mcq";
 import ReactMarkdown from "react-markdown";
+import { Badge } from "@/components/ui/badge";
 
 interface QuestionCardProps {
   question: MCQ;
@@ -175,6 +176,12 @@ export const QuestionCard = ({
                 onCheckedChange={() => onSelect(question)}
               />
               <span className="font-medium text-primary">{question.unitTitle}</span>
+              <Badge variant={
+                question.category === 'BASE' ? 'default' :
+                question.category === 'VARIANT' ? 'secondary' : 'outline'
+              }>
+                {question.category}
+              </Badge>
             </div>
           </div>
 

@@ -14,6 +14,7 @@ export interface MCQ {
   learningOutcome: string;
   explanation?: string;
   bloomLevel: string;
+  category: 'BASE' | 'VARIANT' | 'OTHER';
   options: {
     id: string;
     text: string;
