@@ -43,6 +43,7 @@ export default function ClassroomVariants() {
           learningOutcome: item.learning_outcome,
           explanation: item.explanation,
           bloomLevel: item.bloom_level,
+          category: item.category || 'BASE', // Add default category
           options: item.options?.map((opt: any) => ({
             id: opt.id,
             text: opt.option_text,

@@ -204,7 +204,8 @@ const parseOpenAIResponse = (response: string, unitId: string): MCQ[] => {
       const question: any = {
         options: [],
         unitId,
-        bloomLevel: 'UNDERSTAND' // Set default bloom level
+        bloomLevel: 'UNDERSTAND', // Set default bloom level
+        category: 'BASE' // Set default category for new questions
       };
     
       for (const match of matches) {
@@ -274,12 +275,13 @@ const parseOpenAIResponse = (response: string, unitId: string): MCQ[] => {
         learningOutcome: question.learningOutcome,
         explanation: question.explanation,
         bloomLevel: question.bloomLevel,
+        category: question.category as 'BASE' | 'VARIANT' | 'OTHER',
         options: []
       };
 
       // Process options based on question type
       if (question.options) {
-        mcq.options = question.options.map((opt, index) => ({
+        mcq.options = question.options.map((opt: string, index: number) => ({
           id: crypto.randomUUID(),
           text: opt,
           order: index + 1,
@@ -299,7 +301,7 @@ const parseOpenAIResponse = (response: string, unitId: string): MCQ[] => {
       }
 
       if (question.questionType === 'REARRANGE') {
-        mcq.rearrangeSteps = question.options.map((step, index) => ({
+        mcq.rearrangeSteps = question.options.map((step: string, index: number) => ({
           text: step,
           displayOrder: question.displayOrders?.[index] || index + 1,
           correctOrder: question.correctOrders?.[index] || index + 1
